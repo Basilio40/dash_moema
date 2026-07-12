@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Override the default Cloudflare preset so the production build targets a standalone Node.js
+  // server (Nitro "node-server"). This is what Railway (and any Node container) expects — it
+  // produces .output/server/index.mjs which binds to 0.0.0.0 and reads the PORT env var.
+  nitro: { preset: "node-server" },
 });
