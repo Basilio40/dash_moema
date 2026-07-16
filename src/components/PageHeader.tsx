@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="flex items-start justify-between gap-4 mb-8">
       <div>
@@ -12,8 +20,15 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function Kpi({ label, value, hint, tone = "default" }: {
-  label: string; value: string; hint?: string;
+export function Kpi({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
   tone?: "default" | "positive" | "negative" | "warning";
 }) {
   const toneClass = {
@@ -31,12 +46,24 @@ export function Kpi({ label, value, hint, tone = "default" }: {
   );
 }
 
-export function Panel({ title, children, right }: { title?: string; children: ReactNode; right?: ReactNode }) {
+export function Panel({
+  title,
+  children,
+  right,
+}: {
+  title?: string;
+  children: ReactNode;
+  right?: ReactNode;
+}) {
   return (
     <div className="card-panel p-5">
       {(title || right) && (
         <div className="flex items-center justify-between mb-4">
-          {title && <h3 className="display text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>}
+          {title && (
+            <h3 className="display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {title}
+            </h3>
+          )}
           {right}
         </div>
       )}

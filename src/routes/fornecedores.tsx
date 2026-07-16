@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, ArrowLeft } from "lucide-react";
+import { PeriodFilter, usePeriod } from "@/components/PeriodFilter";
 
 export const Route = createFileRoute("/fornecedores")({
   head: () => ({
@@ -46,16 +47,30 @@ type Item = {
 
 function FornecedoresPage() {
   const [open, setOpen] = useState<string | null>(null);
+  const period = usePeriod();
 
   const { fornecedores, totalGeral } = useMemo(() => {
     const map = new Map<string, { total: number; itens: Item[] }>();
 
-    (data as any).naoEntregues
-      .filter((cc: any) => cc.aEntregar > 0)
-      .forEach((cc: any) => {
-        const somaItens = cc.itens.reduce((s: number, it: Item) => s + it.valor, 0);
+    const source = ((data as Record<string, unknown>).naoEntregues ?? []) as Array<{
+      centroCusto: string;
+      totalCompra: number;
+      receita: number;
+      aEntregar: number;
+      itens: Item[];
+    }>;
+
+    source
+      .filter((cc) => cc.aEntregar > 0)
+      .map((cc) => ({
+        ...cc,
+        itens: period.mes === "all" ? cc.itens : cc.itens.filter((it) => it.mes === period.mes),
+      }))
+      .filter((cc) => cc.itens.length > 0)
+      .forEach((cc) => {
+        const somaItens = cc.itens.reduce((s, it) => s + it.valor, 0);
         const fator = somaItens > 0 ? cc.aEntregar / somaItens : 0;
-        cc.itens.forEach((it: Item) => {
+        cc.itens.forEach((it) => {
           const key = it.fornecedor || "(sem fornecedor)";
           const cur = map.get(key) ?? { total: 0, itens: [] };
           cur.total += it.valor * fator;
@@ -78,7 +93,7 @@ function FornecedoresPage() {
     });
 
     return { fornecedores: withCum, totalGeral: total };
-  }, []);
+  }, [period.mes]);
 
   const top = fornecedores.slice(0, 15);
   const top1 = fornecedores[0];
@@ -97,6 +112,7 @@ function FornecedoresPage() {
       <PageHeader
         title="Fornecedores — Pareto de Gastos a Entregar"
         subtitle="Distribuição das compras comprometidas (grupo 4.02) por fornecedor. A curva de Pareto mostra a concentração dos gastos."
+        actions={<PeriodFilter value={period} />}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -104,7 +120,7 @@ function FornecedoresPage() {
           label="Total a entregar"
           value={brlCompact(totalGeral)}
           tone="warning"
-          hint="Comprometido líquido"
+          hint={period.mes === "all" ? "Comprometido líquido" : `Em ${period.mes}/26`}
         />
         <Kpi
           label="Nº de fornecedores"
@@ -263,7 +279,7 @@ function FornecedoresPage() {
                           {f.itens
                             .slice()
                             .sort((a, b) => (b.valorEntrega ?? 0) - (a.valorEntrega ?? 0))
-                            .map((it: any, i: number) => (
+                            .map((it, i) => (
                               <tr key={i} className="border-t border-border/30">
                                 <td className="py-1 text-muted-foreground">{it.mes}</td>
                                 <td className="py-1 text-foreground">{it.centroCusto}</td>
@@ -274,7 +290,9 @@ function FornecedoresPage() {
                                 <td className="py-1 text-muted-foreground max-w-[220px] truncate">
                                   {it.obs}
                                 </td>
-                                <td className="py-1 text-right text-muted-foreground">{brl(it.valor)}</td>
+                                <td className="py-1 text-right text-muted-foreground">
+                                  {brl(it.valor)}
+                                </td>
                                 <td className="py-1 text-right text-[color:var(--warning)]">
                                   {brl(it.valorEntrega ?? 0)}
                                 </td>

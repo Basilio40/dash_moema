@@ -3,6 +3,7 @@ import data from "@/data/dashboard.json";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
+import { PeriodFilter, usePeriod, filterByMes } from "@/components/PeriodFilter";
 import {
   ResponsiveContainer,
   BarChart,
@@ -19,14 +20,19 @@ import {
 export const Route = createFileRoute("/")({ component: Index });
 
 function Index() {
-  const totals = data.dreMonth.reduce(
+  const period = usePeriod();
+  const dreFiltered = filterByMes(data.dreMonth, period.mes);
+  const fcFiltered = filterByMes(data.fluxoCaixa, period.mes);
+  const totals = dreFiltered.reduce(
     (a, m) => ({ rec: a.rec + m.receitas, desp: a.desp + m.despesas }),
     { rec: 0, desp: 0 },
   );
   const resultado = totals.rec - totals.desp;
   const margem = totals.rec ? (resultado / totals.rec) * 100 : 0;
-  const ultimoSaldo = data.fluxoCaixa[data.fluxoCaixa.length - 1]?.saldoAcum ?? 0;
-  const totalNaoEntregue = (data as any).naoEntreguesResumo?.totalAEntregar ?? 0;
+  const ultimoSaldo = fcFiltered[fcFiltered.length - 1]?.saldoAcum ?? 0;
+  const totalNaoEntregue =
+    (data as Record<string, unknown> as { naoEntreguesResumo?: { totalAEntregar?: number } })
+      .naoEntreguesResumo?.totalAEntregar ?? 0;
   const totalClientes = data.clientes.length;
 
   return (
@@ -34,6 +40,7 @@ function Index() {
       <PageHeader
         title="Painel Executivo - Moema"
         subtitle={`${data.meta.empresa} · ${data.meta.periodo} · ${data.meta.totalRegistros.toLocaleString("pt-BR")} lançamentos`}
+        actions={<PeriodFilter value={period} />}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -64,7 +71,7 @@ function Index() {
         <div className="lg:col-span-2">
           <Panel title="Receitas × Despesas × Resultado">
             <ResponsiveContainer width="100%" height={320}>
-              <ComposedChart data={data.dreMonth}>
+              <ComposedChart data={dreFiltered}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
                 <YAxis
@@ -98,7 +105,7 @@ function Index() {
             Saldo projetado no final do período
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data.fluxoCaixa}>
+            <BarChart data={fcFiltered}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
               <YAxis
@@ -106,11 +113,7 @@ function Index() {
                 tickFormatter={brlCompact}
               />
               <Tooltip content={<DarkTooltip />} />
-              <Bar dataKey="liquido" name="Líquido do mês" radius={[6, 6, 0, 0]}>
-                {data.fluxoCaixa.map((d, i) => (
-                  <text key={i}>{d.liquido}</text>
-                ))}
-              </Bar>
+              <Bar dataKey="liquido" name="Líquido do mês" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Panel>
