@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "start": "node .output/server/index.mjs",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "watch:data": "node scripts/watch-data.mjs",
+    "update:data": "node scripts/watch-data.mjs --once"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

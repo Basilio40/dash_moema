@@ -4,6 +4,7 @@ import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
 import { PeriodFilter, usePeriod, filterByMes } from "@/components/PeriodFilter";
+import { ajustarDespesas } from "@/lib/despesas";
 import {
   ResponsiveContainer,
   BarChart,
@@ -22,8 +23,9 @@ export const Route = createFileRoute("/")({ component: Index });
 function Index() {
   const period = usePeriod();
   const dreFiltered = filterByMes(data.dreMonth, period.mes);
+  const dreAjustado = ajustarDespesas(dreFiltered);
   const fcFiltered = filterByMes(data.fluxoCaixa, period.mes);
-  const totals = dreFiltered.reduce(
+  const totals = dreAjustado.reduce(
     (a, m) => ({ rec: a.rec + m.receitas, desp: a.desp + m.despesas }),
     { rec: 0, desp: 0 },
   );
@@ -71,7 +73,7 @@ function Index() {
         <div className="lg:col-span-2">
           <Panel title="Receitas × Despesas × Resultado">
             <ResponsiveContainer width="100%" height={320}>
-              <ComposedChart data={dreFiltered}>
+              <ComposedChart data={dreAjustado}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
                 <YAxis

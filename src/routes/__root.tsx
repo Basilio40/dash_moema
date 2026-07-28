@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Sidebar } from "../components/Sidebar";
+import { Toaster } from "../components/ui/sonner";
 import "../lib/recharts-config";
 
 function NotFoundComponent() {
@@ -125,6 +126,7 @@ function RootComponent() {
           <Outlet />
         </main>
       </div>
+      <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
 }

@@ -23,6 +23,7 @@ import {
   colunasMes,
   valorMes,
 } from "@/components/PeriodFilter";
+import { ajustarDespesas } from "@/lib/despesas";
 
 export const Route = createFileRoute("/dre")({
   head: () => ({
@@ -42,7 +43,8 @@ function DrePage() {
   const [expandido, setExpandido] = useState<string | null>(null);
   const period = usePeriod();
   const dreFiltered = filterByMes(data.dreMonth, period.mes);
-  const totals = dreFiltered.reduce(
+  const dreAjustado = ajustarDespesas(dreFiltered);
+  const totals = dreAjustado.reduce(
     (a, m) => ({ rec: a.rec + m.receitas, desp: a.desp + m.despesas }),
     { rec: 0, desp: 0 },
   );
@@ -83,7 +85,7 @@ function DrePage() {
 
       <Panel title="Evolução mensal">
         <ResponsiveContainer width="100%" height={360}>
-          <ComposedChart data={dreFiltered}>
+          <ComposedChart data={dreAjustado}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis

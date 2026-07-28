@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BarChart3, TrendingUp, PackageOpen, Layers, Users, Truck } from "lucide-react";
+import { RefreshDataButton } from "./RefreshDataButton";
 
 const items = [
   { to: "/", label: "Visão Geral", icon: BarChart3 },
@@ -43,8 +44,9 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="p-4 border-t border-border text-[10px] text-muted-foreground">
-        Dados: Jan–Jul / 2026
+      <div className="p-4 border-t border-border space-y-3">
+        <RefreshDataButton />
+        <div className="text-[10px] text-muted-foreground">Dados: Jan–Jul / 2026</div>
       </div>
     </aside>
   );
