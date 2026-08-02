@@ -3,6 +3,10 @@ import { BarChart3, TrendingUp, Layers, Users, Truck } from "lucide-react";
 import { RefreshDataButton } from "./RefreshDataButton";
 
 const items = [
+<<<<<<< HEAD
+=======
+  { to: "/", label: "Visão Geral", icon: BarChart3 },
+>>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
   { to: "/dre", label: "DRE Mensal", icon: BarChart3 },
   { to: "/fluxo-caixa", label: "Fluxo de Caixa", icon: TrendingUp },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
