@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as NaoEntreguesRouteImport } from './routes/nao-entregues'
 import { Route as FornecedoresRouteImport } from './routes/fornecedores'
 import { Route as FluxoCaixaRouteImport } from './routes/fluxo-caixa'
 import { Route as DreRouteImport } from './routes/dre'
@@ -17,11 +16,6 @@ import { Route as CentrosCustoRouteImport } from './routes/centros-custo'
 import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as IndexRouteImport } from './routes/index'
 
-const NaoEntreguesRoute = NaoEntreguesRouteImport.update({
-  id: '/nao-entregues',
-  path: '/nao-entregues',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const FornecedoresRoute = FornecedoresRouteImport.update({
   id: '/fornecedores',
   path: '/fornecedores',
@@ -60,7 +54,6 @@ export interface FileRoutesByFullPath {
   '/dre': typeof DreRoute
   '/fluxo-caixa': typeof FluxoCaixaRoute
   '/fornecedores': typeof FornecedoresRoute
-  '/nao-entregues': typeof NaoEntreguesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +62,6 @@ export interface FileRoutesByTo {
   '/dre': typeof DreRoute
   '/fluxo-caixa': typeof FluxoCaixaRoute
   '/fornecedores': typeof FornecedoresRoute
-  '/nao-entregues': typeof NaoEntreguesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +71,6 @@ export interface FileRoutesById {
   '/dre': typeof DreRoute
   '/fluxo-caixa': typeof FluxoCaixaRoute
   '/fornecedores': typeof FornecedoresRoute
-  '/nao-entregues': typeof NaoEntreguesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +81,6 @@ export interface FileRouteTypes {
     | '/dre'
     | '/fluxo-caixa'
     | '/fornecedores'
-    | '/nao-entregues'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +89,6 @@ export interface FileRouteTypes {
     | '/dre'
     | '/fluxo-caixa'
     | '/fornecedores'
-    | '/nao-entregues'
   id:
     | '__root__'
     | '/'
@@ -108,7 +97,6 @@ export interface FileRouteTypes {
     | '/dre'
     | '/fluxo-caixa'
     | '/fornecedores'
-    | '/nao-entregues'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,18 +106,10 @@ export interface RootRouteChildren {
   DreRoute: typeof DreRoute
   FluxoCaixaRoute: typeof FluxoCaixaRoute
   FornecedoresRoute: typeof FornecedoresRoute
-  NaoEntreguesRoute: typeof NaoEntreguesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/nao-entregues': {
-      id: '/nao-entregues'
-      path: '/nao-entregues'
-      fullPath: '/nao-entregues'
-      preLoaderRoute: typeof NaoEntreguesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/fornecedores': {
       id: '/fornecedores'
       path: '/fornecedores'
@@ -182,7 +162,6 @@ const rootRouteChildren: RootRouteChildren = {
   DreRoute: DreRoute,
   FluxoCaixaRoute: FluxoCaixaRoute,
   FornecedoresRoute: FornecedoresRoute,
-  NaoEntreguesRoute: NaoEntreguesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

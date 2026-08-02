@@ -42,6 +42,7 @@ type Item = {
   conta: string;
   fornecedor: string;
   tipo: string;
+  categoria?: string;
   centroCusto?: string;
 };
 
@@ -103,15 +104,15 @@ function FornecedoresPage() {
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
       <Link
-        to="/nao-entregues"
+        to="/centros-custo"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
       >
-        <ArrowLeft className="h-3 w-3" /> Voltar para A Entregar por Cliente
+        <ArrowLeft className="h-3 w-3" /> Voltar para Centros de Custo
       </Link>
 
       <PageHeader
         title="Fornecedores — Pareto de Gastos a Entregar"
-        subtitle="Distribuição das compras comprometidas (grupo 4.02) por fornecedor. A curva de Pareto mostra a concentração dos gastos."
+        subtitle="Distribuição do saldo a entregar (líquido) por fornecedor. Inclui compras/fretes (4.02), comissões (4.03) e financeiro (4.07), rateados pela proporção do saldo líquido de cada cliente."
         actions={<PeriodFilter value={period} />}
       />
 
@@ -206,8 +207,8 @@ function FornecedoresPage() {
         </ResponsiveContainer>
         <div className="mt-2 text-[11px] text-muted-foreground">
           Linha vermelha tracejada marca 80% — regra de Pareto. Fornecedores à esquerda desse limite
-          concentram a maior parte dos gastos. Valores proporcionais ao saldo a entregar por cliente
-          (compras totais menos receitas já reconhecidas).
+          concentram a maior parte dos gastos. Valores proporcionais ao saldo líquido a entregar por
+          cliente (receita menos custo de compras 4.02, comissões 4.03 e financeiro 4.07).
         </div>
       </Panel>
 
@@ -269,9 +270,10 @@ function FornecedoresPage() {
                             <th className="text-left py-1">Mês</th>
                             <th className="text-left py-1">Cliente / CC</th>
                             <th className="text-left py-1">Título</th>
+                            <th className="text-left py-1">Categoria</th>
                             <th className="text-left py-1">Conta</th>
                             <th className="text-left py-1">Observação</th>
-                            <th className="text-right py-1">Valor compra</th>
+                            <th className="text-right py-1">Valor custo</th>
                             <th className="text-right py-1">A entregar</th>
                           </tr>
                         </thead>
@@ -284,10 +286,13 @@ function FornecedoresPage() {
                                 <td className="py-1 text-muted-foreground">{it.mes}</td>
                                 <td className="py-1 text-foreground">{it.centroCusto}</td>
                                 <td className="py-1 text-muted-foreground">{it.titulo}</td>
-                                <td className="py-1 text-muted-foreground max-w-[240px] truncate">
-                                  {it.conta}
+                                <td className="py-1 text-muted-foreground whitespace-nowrap">
+                                  {it.categoria || it.tipo}
                                 </td>
                                 <td className="py-1 text-muted-foreground max-w-[220px] truncate">
+                                  {it.conta}
+                                </td>
+                                <td className="py-1 text-muted-foreground max-w-[200px] truncate">
                                   {it.obs}
                                 </td>
                                 <td className="py-1 text-right text-muted-foreground">
@@ -301,7 +306,7 @@ function FornecedoresPage() {
                         </tbody>
                         <tfoot>
                           <tr className="border-t border-border/60 font-semibold">
-                            <td colSpan={6} className="py-1 text-right text-muted-foreground">
+                            <td colSpan={7} className="py-1 text-right text-muted-foreground">
                               Total {f.fornecedor.slice(0, 24)}:
                             </td>
                             <td className="py-1 text-right text-[color:var(--warning)]">

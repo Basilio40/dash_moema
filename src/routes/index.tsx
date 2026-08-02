@@ -35,6 +35,7 @@ function Index() {
   const totalNaoEntregue =
     (data as Record<string, unknown> as { naoEntreguesResumo?: { totalAEntregar?: number } })
       .naoEntreguesResumo?.totalAEntregar ?? 0;
+  const numClientesPendentes = data.naoEntregues.filter((n) => n.aEntregar > 0).length;
   const totalClientes = data.clientes.length;
 
   return (
@@ -61,10 +62,10 @@ function Index() {
         />
         <Link to="/fornecedores" className="block hover:scale-[1.02] hover:kpi-glow transition-all">
           <Kpi
-            label="Compras a Entregar"
+            label="A Entregar (líquido)"
             value={brlCompact(totalNaoEntregue)}
             tone="warning"
-            hint={`${data.naoEntregues.length} fornecedores · ver pareto →`}
+            hint={`${numClientesPendentes} clientes · receita − custo · ver pareto →`}
           />
         </Link>
       </div>
@@ -133,14 +134,9 @@ function Index() {
           desc="Previsto × efetivado e projeção acumulada"
         />
         <QuickLink
-          to="/nao-entregues"
-          title="A entregar"
-          desc={`${brlCompact(totalNaoEntregue)} em compras comprometidas`}
-        />
-        <QuickLink
           to="/centros-custo"
           title="Centros de custo"
-          desc="Gastos por consultor/área mês a mês"
+          desc={`${brlCompact(totalNaoEntregue)} a entregar (líquido)`}
         />
         <QuickLink
           to="/carteira"
