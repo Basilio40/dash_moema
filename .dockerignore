@@ -1,0 +1,41 @@
+# Dependencies (installed inside the container from the lockfile)
+node_modules
+
+# Build output (regenerated inside the container)
+dist
+dist-ssr
+.output
+.vinxi
+.nitro
+.tanstack
+
+# Cloudflare / Wrangler
+.wrangler
+.dev.vars
+
+# Environment & secrets
+.env
+.env.*
+*.local
+
+# Version control & editor metadata
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Railway
+railway.json
