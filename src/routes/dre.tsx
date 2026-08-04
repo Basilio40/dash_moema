@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { createFileRoute, Link } from "@tanstack/react-router";
-=======
-import { createFileRoute } from "@tanstack/react-router";
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
 import data from "@/data/dashboard.json";
 import details from "@/data/dre-details.json";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
@@ -11,10 +7,6 @@ import { DarkTooltip } from "@/components/ChartTooltip";
 import {
   ResponsiveContainer,
   ComposedChart,
-<<<<<<< HEAD
-  BarChart,
-=======
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
   Bar,
   Line,
   XAxis,
@@ -22,6 +14,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import { Fragment, useState } from "react";
 import {
@@ -46,35 +39,23 @@ export const Route = createFileRoute("/dre")({
   component: DrePage,
 });
 
-<<<<<<< HEAD
 export function DrePage() {
-=======
-function DrePage() {
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
   const [filtro, setFiltro] = useState<"TODOS" | "RECEITAS" | "DESPESAS">("TODOS");
   const [expandido, setExpandido] = useState<string | null>(null);
   const period = usePeriod();
   const dreFiltered = filterByMes(data.dreMonth, period.mes);
   const dreAjustado = ajustarDespesas(dreFiltered);
-<<<<<<< HEAD
-  const fcFiltered = filterByMes(data.fluxoCaixa, period.mes);
-=======
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
   const totals = dreAjustado.reduce(
     (a, m) => ({ rec: a.rec + m.receitas, desp: a.desp + m.despesas }),
     { rec: 0, desp: 0 },
   );
   const resultado = totals.rec - totals.desp;
   const margemMedia = totals.rec ? (resultado / totals.rec) * 100 : 0;
-<<<<<<< HEAD
-  const ultimoSaldo = fcFiltered[fcFiltered.length - 1]?.saldoAcum ?? 0;
   const totalNaoEntregue =
     (data as Record<string, unknown> as { naoEntreguesResumo?: { totalAEntregar?: number } })
       .naoEntreguesResumo?.totalAEntregar ?? 0;
   const numClientesPendentes = data.naoEntregues.filter((n) => n.aEntregar > 0).length;
   const totalClientes = data.clientes.length;
-=======
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
   const colunas = colunasMes(period.mes);
 
   type Grupo = { top: string; grupoCod: string; grupoNome: string; total: number } & Record<
@@ -93,11 +74,7 @@ function DrePage() {
         actions={<PeriodFilter value={period} />}
       />
 
-<<<<<<< HEAD
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-=======
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
         <Kpi label="Receita Bruta" value={brlCompact(totals.rec)} tone="positive" />
         <Kpi label="Despesas" value={brlCompact(totals.desp)} tone="negative" />
         <Kpi
@@ -110,7 +87,6 @@ function DrePage() {
           value={pct(margemMedia)}
           tone={margemMedia >= 0 ? "positive" : "negative"}
         />
-<<<<<<< HEAD
         <Link to="/fornecedores" className="block hover:scale-[1.02] hover:kpi-glow transition-all">
           <Kpi
             label="A Entregar (líquido)"
@@ -132,12 +108,6 @@ function DrePage() {
                   yAxisId="left"
                   tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                   tickFormatter={brlCompact}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-                  tickFormatter={(v) => `${v}%`}
                 />
                 <Tooltip content={<DarkTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -164,33 +134,21 @@ function DrePage() {
                   strokeWidth={3}
                   dot={{ r: 4 }}
                 />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="margem"
-                  name="Margem %"
-                  stroke="#F59E0B"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  dot={false}
-                />
               </ComposedChart>
             </ResponsiveContainer>
           </Panel>
         </div>
 
-        <Panel title="Fluxo de Caixa Acumulado">
+        <Panel title="Break-even vs Receita">
           <div
             className="text-3xl display font-bold mt-2"
-            style={{ color: ultimoSaldo >= 0 ? "var(--success)" : "var(--destructive)" }}
+            style={{ color: resultado >= 0 ? "var(--success)" : "var(--destructive)" }}
           >
-            {brl(ultimoSaldo)}
+            {pct(margemMedia)}
           </div>
-          <div className="text-xs text-muted-foreground mb-4">
-            Saldo projetado no final do período
-          </div>
+          <div className="text-xs text-muted-foreground mb-4">Margem média no período</div>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={fcFiltered}>
+            <ComposedChart data={dreAjustado}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
               <YAxis
@@ -198,69 +156,19 @@ function DrePage() {
                 tickFormatter={brlCompact}
               />
               <Tooltip content={<DarkTooltip />} />
-              <Bar dataKey="liquido" name="Líquido do mês" radius={[6, 6, 0, 0]} />
-            </BarChart>
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <ReferenceLine y={0} stroke="var(--border)" />
+              <Bar dataKey="receitas" name="Receita" fill="#10B981" radius={[6, 6, 0, 0]} />
+              <Bar
+                dataKey="despesas"
+                name="Break-even (despesas)"
+                fill="#F59E0B"
+                radius={[6, 6, 0, 0]}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </Panel>
       </div>
-=======
-      </div>
-
-      <Panel title="Evolução mensal">
-        <ResponsiveContainer width="100%" height={360}>
-          <ComposedChart data={dreAjustado}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
-            <YAxis
-              yAxisId="left"
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              tickFormatter={brlCompact}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              tickFormatter={(v) => `${v}%`}
-            />
-            <Tooltip content={<DarkTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar
-              yAxisId="left"
-              dataKey="receitas"
-              name="Receitas"
-              fill="#10B981"
-              radius={[6, 6, 0, 0]}
-            />
-            <Bar
-              yAxisId="left"
-              dataKey="despesas"
-              name="Despesas"
-              fill="#F87171"
-              radius={[6, 6, 0, 0]}
-            />
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="resultado"
-              name="Resultado"
-              stroke="#22D3EE"
-              strokeWidth={3}
-              dot={{ r: 4 }}
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="margem"
-              name="Margem %"
-              stroke="#F59E0B"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              dot={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </Panel>
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d
 
       <div className="mt-8">
         <Panel
@@ -365,7 +273,6 @@ function DrePage() {
           </div>
         </Panel>
       </div>
-<<<<<<< HEAD
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <QuickLink
@@ -401,8 +308,3 @@ function QuickLink({ to, title, desc }: { to: string; title: string; desc: strin
     </Link>
   );
 }
-=======
-    </div>
-  );
-}
->>>>>>> a075e0b2ccc6e131e871e0b7c8d9a97c4d98c02d

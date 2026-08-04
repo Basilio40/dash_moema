@@ -1,0 +1,135 @@
+{
+  "fonte": "Contratos69d6da91963a4bdd81fe8ccb470d790f.xlsx",
+  "colunas": [
+    "Valor da Venda",
+    "Previsão de Entrega"
+  ],
+  "total": 764927911.0,
+  "series": [
+    {
+      "mes": "May/25",
+      "valor": 953454.0,
+      "acumulado": 953454.0
+    },
+    {
+      "mes": "Jun/25",
+      "valor": 5791789.0,
+      "acumulado": 6745243.0
+    },
+    {
+      "mes": "Jul/25",
+      "valor": 49088.0,
+      "acumulado": 6794331.0
+    },
+    {
+      "mes": "Sep/25",
+      "valor": 484000.0,
+      "acumulado": 7278331.0
+    },
+    {
+      "mes": "Oct/25",
+      "valor": 64990.0,
+      "acumulado": 7343321.0
+    },
+    {
+      "mes": "Nov/25",
+      "valor": 5261245.0,
+      "acumulado": 12604566.0
+    },
+    {
+      "mes": "Dec/25",
+      "valor": 30000.0,
+      "acumulado": 12634566.0
+    },
+    {
+      "mes": "Jan/26",
+      "valor": 8039723.0,
+      "acumulado": 20674289.0
+    },
+    {
+      "mes": "Feb/26",
+      "valor": 35065820.0,
+      "acumulado": 55740109.0
+    },
+    {
+      "mes": "Mar/26",
+      "valor": 6084869.0,
+      "acumulado": 61824978.0
+    },
+    {
+      "mes": "Apr/26",
+      "valor": 9954300.0,
+      "acumulado": 71779278.0
+    },
+    {
+      "mes": "May/26",
+      "valor": 62489882.0,
+      "acumulado": 134269160.0
+    },
+    {
+      "mes": "Jun/26",
+      "valor": 64379029.0,
+      "acumulado": 198648189.0
+    },
+    {
+      "mes": "Jul/26",
+      "valor": 65592132.0,
+      "acumulado": 264240321.0
+    },
+    {
+      "mes": "Aug/26",
+      "valor": 71507093.0,
+      "acumulado": 335747414.0
+    },
+    {
+      "mes": "Sep/26",
+      "valor": 153038709.0,
+      "acumulado": 488786123.0
+    },
+    {
+      "mes": "Oct/26",
+      "valor": 113469309.0,
+      "acumulado": 602255432.0
+    },
+    {
+      "mes": "Nov/26",
+      "valor": 50010480.0,
+      "acumulado": 652265912.0
+    },
+    {
+      "mes": "Dec/26",
+      "valor": 53230132.0,
+      "acumulado": 705496044.0
+    },
+    {
+      "mes": "Jan/27",
+      "valor": 30500473.0,
+      "acumulado": 735996517.0
+    },
+    {
+      "mes": "Feb/27",
+      "valor": 4120000.0,
+      "acumulado": 740116517.0
+    },
+    {
+      "mes": "Mar/27",
+      "valor": 8874958.0,
+      "acumulado": 748991475.0
+    },
+    {
+      "mes": "Apr/27",
+      "valor": 3625936.0,
+      "acumulado": 752617411.0
+    },
+    {
+      "mes": "May/27",
+      "valor": 8492723.0,
+      "acumulado": 761110134.0
+    },
+    {
+      "mes": "Sep/27",
+      "valor": 3817777.0,
+      "acumulado": 764927911.0
+    }
+  ]
+}

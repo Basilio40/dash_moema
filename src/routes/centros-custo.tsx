@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import data from "@/data/dashboard.json";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
-import { DarkTooltip } from "@/components/ChartTooltip";
 import {
   ResponsiveContainer,
   BarChart,
@@ -51,6 +50,24 @@ type NaoEntregue = {
   itens: ItemNE[];
 };
 
+function GanhoTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-popover/95 backdrop-blur px-3 py-2 shadow-xl text-xs">
+      <div className="font-semibold text-foreground mb-1">{label}</div>
+      {payload.map((p: any, i: number) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full" style={{ background: p.color || p.fill }} />
+          <span className="text-muted-foreground">{p.name}:</span>
+          <span className="font-medium text-foreground">
+            {p.dataKey === "pctGanho" ? `${p.value.toFixed(1)}%` : brl(p.value)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function CentrosCustoPage() {
   const [open, setOpen] = useState<string | null>(null);
   const period = usePeriod();
@@ -81,8 +98,8 @@ function CentrosCustoPage() {
 
   const top10 = items.slice(0, 10).map((x) => ({
     nome: x.centroCusto.slice(0, 22),
-    aEntregar: x.aEntregar,
-    compra: x.totalCompra,
+    ganho: x.aEntregar,
+    pctGanho: x.receita > 0 ? (x.aEntregar / x.receita) * 100 : 0,
   }));
 
   return (
@@ -118,7 +135,7 @@ function CentrosCustoPage() {
       </div>
 
       <Panel
-        title="Top 10 clientes com maior valor a entregar"
+        title="Top 10 clientes com maior ganho"
         right={
           <Link
             to="/fornecedores"
@@ -132,8 +149,16 @@ function CentrosCustoPage() {
           <BarChart data={top10} layout="vertical" margin={{ left: 60 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
+              xAxisId="value"
               type="number"
               tickFormatter={brlCompact}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+            />
+            <XAxis
+              xAxisId="pct"
+              type="number"
+              orientation="top"
+              tickFormatter={(v) => `${v}%`}
               tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
             />
             <YAxis
@@ -142,10 +167,22 @@ function CentrosCustoPage() {
               tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
               width={140}
             />
-            <Tooltip content={<DarkTooltip />} />
+            <Tooltip content={<GanhoTooltip />} />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="compra" name="Custo total" fill="#60A5FA" radius={[0, 4, 4, 0]} />
-            <Bar dataKey="aEntregar" name="A entregar (líquido)" fill="#F59E0B" radius={[0, 4, 4, 0]} />
+            <Bar
+              xAxisId="value"
+              dataKey="ganho"
+              name="Ganho"
+              fill="#F59E0B"
+              radius={[0, 4, 4, 0]}
+            />
+            <Bar
+              xAxisId="pct"
+              dataKey="pctGanho"
+              name="% Ganho / Receita"
+              fill="#10B981"
+              radius={[0, 4, 4, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </Panel>
@@ -191,14 +228,14 @@ function CentrosCustoPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-6 shrink-0 font-mono text-xs">
-                      <span className="text-muted-foreground">
-                        Custo: {brlCompact(f.totalCompra)}
-                      </span>
                       <span className="text-[color:var(--success)]">
                         Receita: {brlCompact(f.receita)}
                       </span>
+                      <span className="text-muted-foreground">
+                        Custo: {brlCompact(f.totalCompra)}
+                      </span>
                       <span className="text-[color:var(--warning)] font-semibold">
-                        A entregar: {brlCompact(f.aEntregar)}
+                        Ganho: {brlCompact(f.aEntregar)}
                       </span>
                     </div>
                   </button>
