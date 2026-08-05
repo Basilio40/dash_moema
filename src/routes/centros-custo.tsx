@@ -39,6 +39,7 @@ type ItemNE = {
   fornecedor: string;
   tipo: string;
   categoria?: string;
+  tipDoc?: string;
 };
 
 type NaoEntregue = {
@@ -49,6 +50,20 @@ type NaoEntregue = {
   categorias?: Record<string, number>;
   itens: ItemNE[];
 };
+
+function getProvisaoTipo(item: ItemNE): "PCP" | "PFP" | "PPC" | null {
+  // As provisões devem ser classificadas pelo tipo de documento do Focco
+  // (PCP, PPC, PFP), e não pelo nome da conta.
+  const tipDoc = (item.tipDoc || "").toUpperCase();
+  if (tipDoc === "PCP") return "PCP";
+  if (tipDoc === "PPC") return "PPC";
+  if (tipDoc === "PFP") return "PFP";
+  return null;
+}
+
+function isProvisao(item: ItemNE) {
+  return getProvisaoTipo(item) !== null;
+}
 
 function GanhoTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -78,12 +93,17 @@ function CentrosCustoPage() {
       const itensFiltrados =
         period.mes === "all" ? cc.itens : cc.itens.filter((it) => it.mes === period.mes);
       const totalCompra = itensFiltrados.reduce((s, it) => s + it.valor, 0);
+      const despesasProvisionadas = itensFiltrados.reduce(
+        (s, it) => (isProvisao(it) ? s + it.valor : s),
+        0,
+      );
       // Quando filtrando por mês, o "a entregar" é estimado pela proporção dos itens do mês
       const fator = cc.itens.length > 0 ? itensFiltrados.length / cc.itens.length : 0;
       return {
         ...cc,
         itens: itensFiltrados,
         totalCompra,
+        despesasProvisionadas,
         aEntregar: period.mes === "all" ? cc.aEntregar : cc.aEntregar * fator,
       };
     })
@@ -234,6 +254,12 @@ function CentrosCustoPage() {
                       <span className="text-muted-foreground">
                         Custo: {brlCompact(f.totalCompra)}
                       </span>
+                      <span
+                        className="text-muted-foreground"
+                        title="Soma das provisões (tipos PCP + PPC + PFP)"
+                      >
+                        Provisionadas (PCP/PPC/PFP): {brlCompact(f.despesasProvisionadas)}
+                      </span>
                       <span className="text-[color:var(--warning)] font-semibold">
                         Ganho: {brlCompact(f.aEntregar)}
                       </span>
@@ -242,9 +268,7 @@ function CentrosCustoPage() {
                   {isOpen && f.itens.length > 0 && (
                     <div className="pl-8 pb-4 pr-2">
                       {cats.map((cat) => {
-                        const catItens = f.itens.filter(
-                          (it) => (it.categoria || "Compra") === cat,
-                        );
+                        const catItens = f.itens.filter((it) => (it.categoria || "Compra") === cat);
                         const subtotal = catItens.reduce((s, it) => s + it.valor, 0);
                         return (
                           <div key={cat} className="mb-3 last:mb-0">
