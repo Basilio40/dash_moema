@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import { ChevronDown, ChevronRight, ArrowRight } from "lucide-react";
 import { PeriodFilter, usePeriod } from "@/components/PeriodFilter";
+import { DrillDownClientes } from "@/components/DrillDownClientes";
 
 export const Route = createFileRoute("/centros-custo")({
   head: () => ({
@@ -324,6 +325,10 @@ function CentrosCustoPage() {
             })}
           </div>
         </Panel>
+      </div>
+
+      <div className="mt-8">
+        <DrillDownClientes mes={period.mes} />
       </div>
     </div>
   );
