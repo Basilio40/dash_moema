@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import { ChevronDown, ChevronRight, ArrowRight } from "lucide-react";
 import { PeriodFilter, usePeriod } from "@/components/PeriodFilter";
+import { DrillDownClientes } from "@/components/DrillDownClientes";
 
 export const Route = createFileRoute("/centros-custo")({
   head: () => ({
@@ -154,9 +155,10 @@ function CentrosCustoPage() {
         />
       </div>
 
-      <Panel
-        title="Top 10 clientes com maior ganho"
-        right={
+      <DrillDownClientes mes={period.mes} />
+
+      <div className="mt-8">
+        <Panel title="Top 10 clientes com maior ganho" right={
           <Link
             to="/fornecedores"
             className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
@@ -324,6 +326,7 @@ function CentrosCustoPage() {
             })}
           </div>
         </Panel>
+      </div>
       </div>
     </div>
   );
