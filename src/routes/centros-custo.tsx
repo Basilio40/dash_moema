@@ -15,7 +15,6 @@ import {
 import { useState } from "react";
 import { ChevronDown, ChevronRight, ArrowRight } from "lucide-react";
 import { PeriodFilter, usePeriod } from "@/components/PeriodFilter";
-import { DrillDownClientes } from "@/components/DrillDownClientes";
 
 export const Route = createFileRoute("/centros-custo")({
   head: () => ({
@@ -86,6 +85,7 @@ function GanhoTooltip({ active, payload, label }: any) {
 
 function CentrosCustoPage() {
   const [open, setOpen] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
   const period = usePeriod();
 
   // Filtra itens por mês e recalcula totais por cliente quando um mês é selecionado.
@@ -109,6 +109,12 @@ function CentrosCustoPage() {
       };
     })
     .filter((x) => x.aEntregar > 0);
+
+  // Filtro de busca aplicado somente à tabela de detalhamento
+  const buscaNorm = busca.trim().toLowerCase();
+  const itensTabela = buscaNorm
+    ? items.filter((x) => x.centroCusto.toLowerCase().includes(buscaNorm))
+    : items;
 
   const resumo = {
     totalCusto: items.reduce((s, x) => s + x.totalCompra, 0),
@@ -153,10 +159,6 @@ function CentrosCustoPage() {
           label="Ticket médio a entregar"
           value={brlCompact(resumo.totalAEntregar / Math.max(1, resumo.numClientes))}
         />
-      </div>
-
-      <div className="mb-8">
-        <DrillDownClientes mes={period.mes} />
       </div>
 
       <Panel
@@ -214,8 +216,20 @@ function CentrosCustoPage() {
 
       <div className="mt-8">
         <Panel title="Detalhamento por cliente / centro de custo">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar cliente / centro de custo por nome…"
+              className="w-full sm:w-80 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+            <span className="text-xs text-muted-foreground">
+              {itensTabela.length} cliente(s) · {buscaNorm ? "filtrado pela busca" : "mostrando até 50"}
+            </span>
+          </div>
           <div className="divide-y divide-border">
-            {items.slice(0, 50).map((f) => {
+            {itensTabela.slice(0, buscaNorm ? undefined : 50).map((f) => {
               const isOpen = open === f.centroCusto;
               // Agrupa os itens por categoria, preservando a ordem canônica.
               const catOrder = ["Compra e frete", "Comissões", "Financeiro"];
