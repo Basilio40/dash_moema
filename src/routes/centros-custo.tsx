@@ -155,6 +155,10 @@ function CentrosCustoPage() {
         />
       </div>
 
+      <div className="mb-8">
+        <DrillDownClientes mes={period.mes} />
+      </div>
+
       <Panel
         title="Top 10 clientes com maior ganho"
         right={
@@ -325,10 +329,6 @@ function CentrosCustoPage() {
             })}
           </div>
         </Panel>
-      </div>
-
-      <div className="mt-8">
-        <DrillDownClientes mes={period.mes} />
       </div>
     </div>
   );
