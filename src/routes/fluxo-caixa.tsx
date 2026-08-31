@@ -18,7 +18,7 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { PeriodFilter, usePeriod, filterByMes, MESES_CURTOS, colunasMes, valorMes } from "@/components/PeriodFilter";
+import { PeriodFilter, usePeriod, MESES_CURTOS, colunasMes, valorMes } from "@/components/PeriodFilter";
 import { calcularProjecaoReceitas } from "@/lib/projecao-receitas";
 import { parse, addMonths, startOfMonth } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -165,14 +165,6 @@ function DrillDownClientes({ mes }: { mes: string }) {
 
 function FluxoPage() {
   const period = usePeriod();
-  const fc = filterByMes(data.fluxoCaixa, period.mes);
-  const totEntradas = fc.reduce((s, x) => s + x.entradasEfet + x.entradasPrev, 0);
-  const totSaidas = fc.reduce((s, x) => s - x.saidasEfet - x.saidasPrev, 0);
-  const saldoFinal = fc[fc.length - 1]?.saldoAcum ?? 0;
-  const mesesPositivos = fc.filter((m) => m.liquido > 0).length;
-
-  const dreGroups = (data as unknown as { dreGroups: Record<string, number | string>[] }).dreGroups;
-
   const filtroMes = (m: string) => (period.mes === "all" ? true : m.startsWith(period.mes));
 
   const realizadoData = (realizadoFluxo as { mes: string; entradas: number; saidas: number }[])
@@ -182,6 +174,14 @@ function FluxoPage() {
   const previsaoData = (previsaoFluxo as { mes: string; entradas: number; saidas: number }[])
     .filter((d) => filtroMes(d.mes))
     .map((d) => ({ ...d, saldo: d.entradas - d.saidas }));
+
+  const totEntradas = realizadoData.reduce((s, x) => s + x.entradas, 0);
+  const totSaidas = realizadoData.reduce((s, x) => s + x.saidas, 0);
+  const saldoFinal = realizadoData.reduce((s, x) => s + x.saldo, 0);
+  const mesesPositivos = realizadoData.filter((m) => m.saldo > 0).length;
+  const ultimoMes = realizadoData[realizadoData.length - 1]?.mes ?? "Ago/26";
+
+  const dreGroups = (data as unknown as { dreGroups: Record<string, number | string>[] }).dreGroups;
 
   const projecaoReceitas = calcularProjecaoReceitas(dreGroups, MESES_CURTOS, 2026);
 
@@ -239,9 +239,9 @@ function FluxoPage() {
           label="Saldo Acumulado"
           value={brlCompact(saldoFinal)}
           tone={saldoFinal >= 0 ? "positive" : "negative"}
-          hint={period.mes === "all" ? "Ao final de Jul/26" : `Em ${period.mes}/26`}
+          hint={period.mes === "all" ? `Ao final de ${ultimoMes}` : `Em ${period.mes}/26`}
         />
-        <Kpi label="Meses positivos" value={`${mesesPositivos} / ${fc.length}`} />
+        <Kpi label="Meses positivos" value={`${mesesPositivos} / ${realizadoData.length}`} />
       </div>
 
       <Panel title="Entradas × Saídas — Realizado">
