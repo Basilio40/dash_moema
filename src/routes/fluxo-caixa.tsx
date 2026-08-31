@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, Fragment } from "react";
 import data from "@/data/dashboard.json";
 import projecaoContratos from "@/data/projecao-contratos.json";
+import realizadoFluxo from "@/data/fluxo-caixa-realizado.json";
+import previsaoFluxo from "@/data/fluxo-caixa-previsao.json";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact, CHART_COLORS } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -170,20 +172,16 @@ function FluxoPage() {
   const mesesPositivos = fc.filter((m) => m.liquido > 0).length;
 
   const dreGroups = (data as unknown as { dreGroups: Record<string, number | string>[] }).dreGroups;
-  const valorGrupo = (cod: string, mes: string) => {
-    const g = dreGroups.find((x) => x.grupoCod === cod);
-    if (!g) return 0;
-    return mes === "all" ? Number(g.total ?? 0) : Number(g[mes] ?? 0);
-  };
 
-  const ebitdaData = MESES_CURTOS.map((mes) => {
-    const receita = valorGrupo("3.01", mes);
-    const impostos = valorGrupo("4.01", mes);
-    const cmv = valorGrupo("4.02", mes);
-    const pessoal = valorGrupo("4.03", mes);
-    const operacional = valorGrupo("4.04", mes);
-    return { mes, receita, ebitda: receita - impostos - cmv - pessoal - operacional };
-  }).filter((d) => (period.mes === "all" ? true : d.mes === period.mes));
+  const filtroMes = (m: string) => (period.mes === "all" ? true : m.startsWith(period.mes));
+
+  const realizadoData = (realizadoFluxo as { mes: string; entradas: number; saidas: number }[])
+    .filter((d) => filtroMes(d.mes))
+    .map((d) => ({ ...d, saldo: d.entradas - d.saidas }));
+
+  const previsaoData = (previsaoFluxo as { mes: string; entradas: number; saidas: number }[])
+    .filter((d) => filtroMes(d.mes))
+    .map((d) => ({ ...d, saldo: d.entradas - d.saidas }));
 
   const projecaoReceitas = calcularProjecaoReceitas(dreGroups, MESES_CURTOS, 2026);
 
@@ -246,19 +244,40 @@ function FluxoPage() {
         <Kpi label="Meses positivos" value={`${mesesPositivos} / ${fc.length}`} />
       </div>
 
-      <Panel title="Evolução de EBITDA">
+      <Panel title="Entradas × Saídas — Realizado">
         <ResponsiveContainer width="100%" height={360}>
-          <BarChart data={ebitdaData}>
+          <BarChart data={realizadoData}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis
               tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
               tickFormatter={brlCompact}
             />
-            <Tooltip content={<DarkTooltip />} />
+            <Tooltip content={<DarkTooltip />} formatter={(v) => brl(Number(v))} />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <ReferenceLine y={0} stroke="var(--border)" />
-            <Bar dataKey="ebitda" name="EBITDA" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="entradas" name="Entradas" fill="#10B981" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saidas" name="Saídas" fill="#EF4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saldo" name="Saldo" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Panel>
+
+      <Panel title="Previsão de Entradas × Saídas">
+        <ResponsiveContainer width="100%" height={360}>
+          <BarChart data={previsaoData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+            <YAxis
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              tickFormatter={brlCompact}
+            />
+            <Tooltip content={<DarkTooltip />} formatter={(v) => brl(Number(v))} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <ReferenceLine y={0} stroke="var(--border)" />
+            <Bar dataKey="entradas" name="Entradas previstas" fill="#10B981" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saidas" name="Saídas previstas" fill="#EF4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saldo" name="Saldo" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </Panel>
