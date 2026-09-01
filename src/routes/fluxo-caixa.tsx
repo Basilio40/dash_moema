@@ -19,7 +19,6 @@ import {
   ReferenceLine,
 } from "recharts";
 import { PeriodFilter, usePeriod, MESES_CURTOS, colunasMes, valorMes } from "@/components/PeriodFilter";
-import { calcularProjecaoReceitas } from "@/lib/projecao-receitas";
 import { parse, addMonths, startOfMonth } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -171,19 +170,33 @@ function FluxoPage() {
     .filter((d) => filtroMes(d.mes))
     .map((d) => ({ ...d, saldo: d.entradas - d.saidas }));
 
+  const dreGroups = (data as unknown as { dreGroups: Record<string, number | string>[] }).dreGroups;
+
+  // Meses reais considerados: Jul é descartado (junto com Ago) nas projeções,
+  // então a média móvel usa Abr/Mai/Jun (item 7.50.01 TOTAL DAS RECEITAS).
+  const MESES_EXCLUIDOS = ["Jul", "Ago"];
+  const mesesReaisBase = MESES_CURTOS.filter((m) => !MESES_EXCLUIDOS.includes(m));
+  const receitasMensais = mesesReaisBase.map((m) => {
+    const grupo = dreGroups.find((g) => g.grupoCod === "3.01");
+    return typeof grupo?.[m] === "number" ? Number(grupo[m]) : 0;
+  });
+  const mediaMovelEntradas =
+    receitasMensais.slice(-3).reduce((s, v) => s + v, 0) / Math.min(3, receitasMensais.length);
+
+  const excluirMesPrevisao = (m: string) => !["Jul/26", "Ago/26"].includes(m);
   const previsaoData = (previsaoFluxo as { mes: string; entradas: number; saidas: number }[])
-    .filter((d) => filtroMes(d.mes))
-    .map((d) => ({ ...d, saldo: d.entradas - d.saidas }));
+    .filter((d) => filtroMes(d.mes) && excluirMesPrevisao(d.mes))
+    .map((d) => ({
+      ...d,
+      entradas: mediaMovelEntradas,
+      saldo: mediaMovelEntradas - d.saidas,
+    }));
 
   const totEntradas = realizadoData.reduce((s, x) => s + x.entradas, 0);
   const totSaidas = realizadoData.reduce((s, x) => s + x.saidas, 0);
   const saldoFinal = realizadoData.reduce((s, x) => s + x.saldo, 0);
   const mesesPositivos = realizadoData.filter((m) => m.saldo > 0).length;
   const ultimoMes = realizadoData[realizadoData.length - 1]?.mes ?? "Ago/26";
-
-  const dreGroups = (data as unknown as { dreGroups: Record<string, number | string>[] }).dreGroups;
-
-  const projecaoReceitas = calcularProjecaoReceitas(dreGroups, MESES_CURTOS, 2026);
 
   const hoje = new Date();
   const inicioPeriodo = startOfMonth(hoje);
@@ -193,7 +206,12 @@ function FluxoPage() {
 
   const projecaoSeries = projecaoContratos.series
     .map((item) => ({ ...item, data: parseMesProjecao(item.mes) }))
-    .filter((item) => item.data >= inicioPeriodo && item.data < fimPeriodo)
+    .filter(
+      (item) =>
+        item.data >= inicioPeriodo &&
+        item.data < fimPeriodo &&
+        !["Jul/26", "Aug/26"].includes(item.mes),
+    )
     .sort((a, b) => a.data.getTime() - b.data.getTime());
 
   const TAXAS_DESPESAS = {
@@ -392,117 +410,6 @@ function FluxoPage() {
         </div>
       </Panel>
 
-      <Panel title="Projeção de Receitas">
-        <ResponsiveContainer width="100%" height={360}>
-          <BarChart data={projecaoReceitas}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
-            <YAxis
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              tickFormatter={brlCompact}
-            />
-            <Tooltip content={<DarkTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <ReferenceLine y={0} stroke="var(--border)" />
-            <Bar dataKey="cmv" name="CMV (40%)" stackId="receita" fill={CHART_COLORS[0]} />
-            <Bar
-              dataKey="despesasVendas"
-              name="Despesas com vendas (24%)"
-              stackId="receita"
-              fill={CHART_COLORS[1]}
-            />
-            <Bar
-              dataKey="despesasFinanceiras"
-              name="Despesas financeiras variáveis (8%)"
-              stackId="receita"
-              fill={CHART_COLORS[2]}
-            />
-            <Bar
-              dataKey="custosFixos"
-              name="Total custos fixos (média 3m)"
-              stackId="receita"
-              fill={CHART_COLORS[3]}
-            />
-            <Bar
-              dataKey="resultado"
-              name="Resultado projetado"
-              stackId="receita"
-              fill="#10B981"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-
-        <div className="mt-6 border-t border-border pt-4">
-          <h3 className="text-sm font-medium text-foreground mb-3">Detalhamento mensal</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-xs uppercase text-muted-foreground border-b border-border">
-                <tr>
-                  <th className="text-left py-2 pr-4 font-medium">Mês</th>
-                  <th className="text-right py-2 px-2 font-medium">Receita</th>
-                  <th className="text-right py-2 px-2 font-medium">CMV (40%)</th>
-                  <th className="text-right py-2 px-2 font-medium">Vendas (24%)</th>
-                  <th className="text-right py-2 px-2 font-medium">Financeiras (8%)</th>
-                  <th className="text-right py-2 px-2 font-medium">Custos fixos</th>
-                  <th className="text-right py-2 pl-2 font-medium">Resultado</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-xs">
-                {projecaoReceitas.map((item) => (
-                  <tr
-                    key={item.mes}
-                    className="border-b border-border/50 hover:bg-panel-elevated/50 transition"
-                  >
-                    <td className="py-2 pr-4 text-foreground">{item.mes}</td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.receita)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.cmv)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.despesasVendas)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.despesasFinanceiras)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.custosFixos)}
-                    </td>
-                    <td className="text-right py-2 pl-2 font-semibold text-foreground">
-                      {brlCompact(item.resultado)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t bg-muted/50 font-medium">
-                <tr>
-                  <td className="py-2 pr-4 text-foreground">Total</td>
-                  <td className="text-right py-2 px-2 text-foreground">
-                    {brlCompact(projecaoReceitas.reduce((s, x) => s + x.receita, 0))}
-                  </td>
-                  <td className="text-right py-2 px-2 text-foreground">
-                    {brlCompact(projecaoReceitas.reduce((s, x) => s + x.cmv, 0))}
-                  </td>
-                  <td className="text-right py-2 px-2 text-foreground">
-                    {brlCompact(projecaoReceitas.reduce((s, x) => s + x.despesasVendas, 0))}
-                  </td>
-                  <td className="text-right py-2 px-2 text-foreground">
-                    {brlCompact(projecaoReceitas.reduce((s, x) => s + x.despesasFinanceiras, 0))}
-                  </td>
-                  <td className="text-right py-2 px-2 text-foreground">
-                    {brlCompact(projecaoReceitas.reduce((s, x) => s + x.custosFixos, 0))}
-                  </td>
-                  <td className="text-right py-2 pl-2 text-foreground">
-                    {brlCompact(projecaoReceitas.reduce((s, x) => s + x.resultado, 0))}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      </Panel>
       <DrillDownClientes mes={period.mes} />
     </div>
   );
