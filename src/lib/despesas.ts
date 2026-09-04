@@ -6,6 +6,7 @@
  *  - 4.07.01        → grupo 4.07 "DESPESAS FINANCEIRAS VARIÁVEIS"
  *  - 4.03.02        → "COMISSÕES E BÔNUS DE TERCEIROS"
  *  - 4.03.01.02.03  → "Comissões captação"
+ *  - 4.03.01.01     → removido do dre-details.json; valores fixos abaixo
  *
  * Observação: estes itens continuam visíveis na tabela detalhada do DRE —
  * apenas deixam de somar para o total/margem/resultado dos KPIs e gráficos.
@@ -15,6 +16,15 @@ import details from "@/data/dre-details.json";
 
 /** itemCod exatos que devem ser subtraídos das despesas exibidas. */
 export const CODIGOS_EXCLUIDOS = ["4.07.01", "4.03.02", "4.03.01.02.03"] as const;
+
+/**
+ * Itens excluídos em definitivo (não existem mais no dre-details.json).
+ * Valores por mês conforme o último registro conhecido do item.
+ * 4.03.01.01 → Jul: 80.000,00 | total: 80.000,00
+ */
+const ITENS_REMOVIDOS: Record<string, Record<string, number>> = {
+  "4.03.01.01": { Jul: 80000, total: 80000 },
+};
 
 type ItemDre = {
   grupoCod: string;
@@ -28,15 +38,23 @@ const itensExcluidos = (details as ItemDre[]).filter((d) =>
 
 /** Soma o valor dos itens excluídos em um mês específico ("Jan".."Jul"). */
 export function valorExcluidoMes(mes: string): number {
-  return itensExcluidos.reduce((s, it) => {
-    const v = it[mes];
-    return s + (typeof v === "number" ? v : 0);
-  }, 0);
+  const fixo = Object.values(ITENS_REMOVIDOS).reduce(
+    (s, m) => s + (m[mes] ?? 0),
+    0,
+  );
+  return (
+    fixo +
+    itensExcluidos.reduce((s, it) => {
+      const v = it[mes];
+      return s + (typeof v === "number" ? v : 0);
+    }, 0)
+  );
 }
 
 /** Soma o valor dos itens excluídos considerando todos os meses. */
 export function valorExcluidoTotal(): number {
-  return itensExcluidos.reduce((s, it) => s + (typeof it.total === "number" ? it.total : 0), 0);
+  const fixo = Object.values(ITENS_REMOVIDOS).reduce((s, m) => s + (m.total ?? 0), 0);
+  return fixo + itensExcluidos.reduce((s, it) => s + (typeof it.total === "number" ? it.total : 0), 0);
 }
 
 type MesDre = {

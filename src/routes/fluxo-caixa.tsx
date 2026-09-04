@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, Fragment } from "react";
 import data from "@/data/dashboard.json";
 import projecaoContratos from "@/data/projecao-contratos.json";
 import realizadoFluxo from "@/data/fluxo-caixa-realizado.json";
 import previsaoFluxo from "@/data/fluxo-caixa-previsao.json";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
-import { brl, brlCompact, CHART_COLORS } from "@/lib/format";
+import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
 import {
   ResponsiveContainer,
@@ -18,7 +17,7 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { PeriodFilter, usePeriod, MESES_CURTOS, colunasMes, valorMes } from "@/components/PeriodFilter";
+import { PeriodFilter, usePeriod, MESES_CURTOS } from "@/components/PeriodFilter";
 import { parse, addMonths, startOfMonth } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -35,132 +34,6 @@ export const Route = createFileRoute("/fluxo-caixa")({
   component: FluxoPage,
 });
 
-type NumRec = Record<string, number>;
-
-type ClienteRec = { cliente: string; primeiroMes: string } & NumRec;
-
-function DrillDownClientes({ mes }: { mes: string }) {
-  const [busca, setBusca] = useState("");
-  const [aberto, setAberto] = useState<string | null>(null);
-  const colunas = colunasMes(mes);
-
-  const clientes = (data as Record<string, unknown>).clientes as unknown as ClienteRec[];
-
-  const filtrados = clientes
-    .filter((c) => c.cliente.toLowerCase().includes(busca.trim().toLowerCase()))
-    .map((c) => ({ rec: c, valor: valorMes(c, mes) }))
-    .sort((a, b) => b.valor - a.valor);
-
-  const totalFiltrado = filtrados.reduce((s, c) => s + c.valor, 0);
-
-  return (
-    <Panel title="Drill-down por cliente">
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <input
-          type="search"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar cliente por nome…"
-          className="w-full sm:w-80 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
-        />
-        <span className="text-xs text-muted-foreground">
-          {filtrados.length} cliente(s) · Total: {brlCompact(totalFiltrado)}
-        </span>
-      </div>
-
-      <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead className="text-xs uppercase text-muted-foreground border-b border-border sticky top-0 bg-panel">
-            <tr>
-              <th className="text-left py-2">Cliente</th>
-              <th className="text-left py-2 px-2">1º mês</th>
-              {colunas.map((m) => (
-                <th key={m} className="text-right py-2 px-2">
-                  {m}
-                </th>
-              ))}
-              <th className="text-right py-2">Total</th>
-            </tr>
-          </thead>
-          <tbody className="font-mono text-xs">
-            {filtrados.map((c) => {
-              const expandido = aberto === c.rec.cliente;
-              return (
-                <Fragment key={c.rec.cliente}>
-                  <tr
-                    onClick={() => setAberto(expandido ? null : c.rec.cliente)}
-                    className="border-b border-border/50 hover:bg-panel-elevated/50 cursor-pointer transition"
-                  >
-                    <td className="py-2 pr-2 text-foreground max-w-[280px] truncate">
-                      <span className="mr-1 text-muted-foreground">{expandido ? "▾" : "▸"}</span>
-                      {c.rec.cliente}
-                    </td>
-                    <td className="py-2 px-2 text-muted-foreground">{c.rec.primeiroMes}</td>
-                    {colunas.map((m) => (
-                      <td key={m} className="text-right py-2 px-2 text-muted-foreground">
-                        {c.rec[m] ? brlCompact(Number(c.rec[m])) : "—"}
-                      </td>
-                    ))}
-                    <td className="text-right py-2 font-semibold text-foreground">
-                      {brlCompact(c.valor)}
-                    </td>
-                  </tr>
-                  {expandido && (
-                    <tr className="border-b border-border/50">
-                      <td colSpan={colunas.length + 3} className="p-4 bg-muted/30">
-                        <ResponsiveContainer width="100%" height={200}>
-                          <BarChart
-                            data={colunas.map((m) => ({ mes: m, valor: Number(c.rec[m] ?? 0) }))}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                            <XAxis
-                              dataKey="mes"
-                              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-                            />
-                            <YAxis
-                              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-                              tickFormatter={brlCompact}
-                            />
-                            <Tooltip content={<DarkTooltip />} formatter={(v) => brl(Number(v))} />
-                            <Bar
-                              dataKey="valor"
-                              name={c.rec.cliente}
-                              fill="#22D3EE"
-                              radius={[4, 4, 0, 0]}
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-            {filtrados.length === 0 && (
-              <tr>
-                <td colSpan={colunas.length + 3} className="py-6 text-center text-muted-foreground">
-                  Nenhum cliente encontrado para “{busca}”.
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot className="border-t bg-muted/50 font-medium">
-            <tr>
-              <td className="py-2 text-foreground">Total ({filtrados.length})</td>
-              <td />
-              {colunas.map((m) => (
-                <td key={m} className="text-right py-2 text-foreground">
-                  {brlCompact(filtrados.reduce((s, c) => s + Number(c.rec[m] ?? 0), 0))}
-                </td>
-              ))}
-              <td className="text-right py-2 text-foreground">{brlCompact(totalFiltrado)}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </Panel>
-  );
-}
 
 function FluxoPage() {
   const period = usePeriod();
@@ -182,6 +55,15 @@ function FluxoPage() {
   });
   const mediaMovelEntradas =
     receitasMensais.slice(-3).reduce((s, v) => s + v, 0) / Math.min(3, receitasMensais.length);
+
+  const MESES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const parseMesPrevisao = (mes: string) => {
+    const [sigla, ano] = mes.split("/");
+    const idx = MESES_PT.indexOf(sigla);
+    return idx >= 0 ? new Date(2000 + Number(ano), idx, 1) : null;
+  };
+  const chaveMes = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+  const rotuloMes = (d: Date) => `${MESES_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
 
   const excluirMesPrevisao = (m: string) => !["Jul/26", "Ago/26"].includes(m);
   const previsaoData = (previsaoFluxo as { mes: string; entradas: number; saidas: number }[])
@@ -216,20 +98,49 @@ function FluxoPage() {
 
   const TAXAS_DESPESAS = {
     transportadora: 0.064,
-    medicao: 0.007,
     montagem: 0.1,
     liberador: 0.02,
   };
+  // Medição: quantidade de projetos no mês × R$ 180,00.
+  // Valor fixo provisório até termos a contagem real por mês no JSON.
+  const VALOR_MEDICAO_POR_PROJETO = 180;
+  const PROJETOS_POR_MES_PADRAO = 10;
 
   const projecaoComDespesas = projecaoSeries.map((item) => {
     const valor = item.valor / 100;
+    const projetos = (item as { projetos?: number }).projetos ?? PROJETOS_POR_MES_PADRAO;
     const transportadora = valor * TAXAS_DESPESAS.transportadora;
-    const medicao = valor * TAXAS_DESPESAS.medicao;
+    const medicao = projetos * VALOR_MEDICAO_POR_PROJETO;
     const montagem = valor * TAXAS_DESPESAS.montagem;
     const liberador = valor * TAXAS_DESPESAS.liberador;
     const totalDespesas = transportadora + medicao + montagem + liberador;
     return { ...item, valor, transportadora, medicao, montagem, liberador, totalDespesas };
   });
+
+  // Une a previsão de entradas/saídas com a projeção de despesas com vendas,
+  // casando os meses por data (previsão usa rótulos PT, projeção usa EN).
+  const previsaoPorChave = new Map(
+    previsaoData
+      .map((d) => ({ ...d, data: parseMesPrevisao(d.mes) }))
+      .filter((d): d is typeof d & { data: Date } => d.data !== null)
+      .map((d) => [chaveMes(d.data), d]),
+  );
+  const projecaoPorChave = new Map(projecaoComDespesas.map((d) => [chaveMes(d.data), d]));
+
+  const previsaoUnificada = Array.from(new Set([...previsaoPorChave.keys(), ...projecaoPorChave.keys()]))
+    .sort()
+    .map((chave) => {
+      const previsao = previsaoPorChave.get(chave);
+      const projecao = projecaoPorChave.get(chave);
+      const data = previsao?.data ?? projecao!.data;
+      return {
+        mes: rotuloMes(data),
+        entradas: previsao ? mediaMovelEntradas : null,
+        saidas: previsao?.saidas ?? null,
+        despesasVendas: projecao?.totalDespesas ?? null,
+        saldo: previsao ? mediaMovelEntradas - previsao.saidas : null,
+      };
+    });
 
   const totaisDespesas = projecaoComDespesas.reduce(
     (s, x) => ({
@@ -281,28 +192,9 @@ function FluxoPage() {
         </ResponsiveContainer>
       </Panel>
 
-      <Panel title="Previsão de Entradas × Saídas">
+      <Panel title="Previsão de Entradas × Saídas — com Projeção de Despesas com Vendas">
         <ResponsiveContainer width="100%" height={360}>
-          <BarChart data={previsaoData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
-            <YAxis
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              tickFormatter={brlCompact}
-            />
-            <Tooltip content={<DarkTooltip />} formatter={(v) => brl(Number(v))} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <ReferenceLine y={0} stroke="var(--border)" />
-            <Bar dataKey="entradas" name="Entradas previstas" fill="#10B981" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="saidas" name="Saídas previstas" fill="#EF4444" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="saldo" name="Saldo" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </Panel>
-
-      <Panel title="Projeção de Despesas">
-        <ResponsiveContainer width="100%" height={360}>
-          <BarChart data={projecaoComDespesas}>
+          <BarChart data={previsaoUnificada}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
               dataKey="mes"
@@ -315,32 +207,21 @@ function FluxoPage() {
               tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
               tickFormatter={brlCompact}
             />
-            <Tooltip content={<DarkTooltip />} />
+            <Tooltip content={<DarkTooltip />} formatter={(v) => brl(Number(v))} />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <ReferenceLine y={0} stroke="var(--border)" />
+            <Bar dataKey="entradas" name="Entradas previstas" fill="#10B981" radius={[4, 4, 0, 0]} />
             <Bar
-              dataKey="transportadora"
-              name="Transportadora (6,4%)"
-              stackId="despesas"
-              fill={CHART_COLORS[0]}
+              dataKey="saidas"
+              name="Saídas previstas"
+              stackId="saidas"
+              fill="#EF4444"
             />
             <Bar
-              dataKey="medicao"
-              name="Medição (0,7%)"
-              stackId="despesas"
-              fill={CHART_COLORS[1]}
-            />
-            <Bar
-              dataKey="montagem"
-              name="Montagem (10%)"
-              stackId="despesas"
-              fill={CHART_COLORS[2]}
-            />
-            <Bar
-              dataKey="liberador"
-              name="Liberador (2%)"
-              stackId="despesas"
-              fill={CHART_COLORS[3]}
+              dataKey="despesasVendas"
+              name="Despesas com vendas"
+              stackId="saidas"
+              fill="#F59E0B"
               radius={[4, 4, 0, 0]}
             />
           </BarChart>
@@ -353,41 +234,81 @@ function FluxoPage() {
               <thead className="text-xs uppercase text-muted-foreground border-b border-border">
                 <tr>
                   <th className="text-left py-2 pr-4 font-medium">Mês</th>
+                  <th className="text-right py-2 px-2 font-medium">Entradas previstas</th>
+                  <th className="text-right py-2 px-2 font-medium">Saídas previstas</th>
                   <th className="text-right py-2 px-2 font-medium">Transportadora</th>
                   <th className="text-right py-2 px-2 font-medium">Medição</th>
                   <th className="text-right py-2 px-2 font-medium">Montagem</th>
                   <th className="text-right py-2 px-2 font-medium">Liberador</th>
-                  <th className="text-right py-2 pl-2 font-medium">Total Despesas</th>
+                  <th className="text-right py-2 px-2 font-medium">Despesas com vendas</th>
+                  <th className="text-right py-2 px-2 font-medium">Saídas + Despesas</th>
+                  <th className="text-right py-2 pl-2 font-medium">Saldo previsto</th>
                 </tr>
               </thead>
               <tbody className="font-mono text-xs">
-                {projecaoComDespesas.map((item) => (
-                  <tr
-                    key={item.mes}
-                    className="border-b border-border/50 hover:bg-panel-elevated/50 transition"
-                  >
-                    <td className="py-2 pr-4 text-foreground">{item.mes}</td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.transportadora)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.medicao)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.montagem)}
-                    </td>
-                    <td className="text-right py-2 px-2 text-muted-foreground">
-                      {brlCompact(item.liberador)}
-                    </td>
-                    <td className="text-right py-2 pl-2 font-semibold text-foreground">
-                      {brlCompact(item.totalDespesas)}
-                    </td>
-                  </tr>
-                ))}
+                {previsaoUnificada.map((item) => {
+                  const projecao = projecaoPorChave.get(
+                    chaveMes(parseMesPrevisao(item.mes) ?? new Date()),
+                  );
+                  const saidasDespesas =
+                    (item.saidas ?? 0) + (item.despesasVendas ?? 0);
+                  const saldoPrevisto = (item.entradas ?? 0) - saidasDespesas;
+                  return (
+                    <tr
+                      key={item.mes}
+                      className="border-b border-border/50 hover:bg-panel-elevated/50 transition"
+                    >
+                      <td className="py-2 pr-4 text-foreground">{item.mes}</td>
+                      <td className="text-right py-2 px-2 text-emerald-600 dark:text-emerald-400">
+                        {item.entradas !== null ? brlCompact(item.entradas) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 text-red-600 dark:text-red-400">
+                        {item.saidas !== null ? brlCompact(item.saidas) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">
+                        {projecao ? brlCompact(projecao.transportadora) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">
+                        {projecao ? brlCompact(projecao.medicao) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">
+                        {projecao ? brlCompact(projecao.montagem) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">
+                        {projecao ? brlCompact(projecao.liberador) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 text-amber-600 dark:text-amber-400">
+                        {item.despesasVendas !== null ? brlCompact(item.despesasVendas) : "—"}
+                      </td>
+                      <td className="text-right py-2 px-2 font-semibold text-foreground">
+                        {item.saidas !== null || item.despesasVendas !== null
+                          ? brlCompact(saidasDespesas)
+                          : "—"}
+                      </td>
+                      <td
+                        className={`text-right py-2 pl-2 font-semibold ${
+                          saldoPrevisto >= 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {item.entradas !== null ? brlCompact(saldoPrevisto) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot className="border-t bg-muted/50 font-medium">
                 <tr>
                   <td className="py-2 pr-4 text-foreground">Total</td>
+                  <td className="text-right py-2 px-2 text-foreground">
+                    {brlCompact(
+                      previsaoUnificada.reduce((s, x) => s + (x.entradas ?? 0), 0),
+                    )}
+                  </td>
+                  <td className="text-right py-2 px-2 text-foreground">
+                    {brlCompact(previsaoUnificada.reduce((s, x) => s + (x.saidas ?? 0), 0))}
+                  </td>
                   <td className="text-right py-2 px-2 text-foreground">
                     {brlCompact(totaisDespesas.transportadora)}
                   </td>
@@ -400,8 +321,24 @@ function FluxoPage() {
                   <td className="text-right py-2 px-2 text-foreground">
                     {brlCompact(totaisDespesas.liberador)}
                   </td>
-                  <td className="text-right py-2 pl-2 text-foreground">
+                  <td className="text-right py-2 px-2 text-foreground">
                     {brlCompact(totaisDespesas.totalDespesas)}
+                  </td>
+                  <td className="text-right py-2 px-2 text-foreground">
+                    {brlCompact(
+                      previsaoUnificada.reduce(
+                        (s, x) => s + (x.saidas ?? 0) + (x.despesasVendas ?? 0),
+                        0,
+                      ),
+                    )}
+                  </td>
+                  <td className="text-right py-2 pl-2 text-foreground">
+                    {brlCompact(
+                      previsaoUnificada.reduce(
+                        (s, x) => s + (x.entradas ?? 0) - (x.saidas ?? 0) - (x.despesasVendas ?? 0),
+                        0,
+                      ),
+                    )}
                   </td>
                 </tr>
               </tfoot>
@@ -409,8 +346,6 @@ function FluxoPage() {
           </div>
         </div>
       </Panel>
-
-      <DrillDownClientes mes={period.mes} />
     </div>
   );
 }
