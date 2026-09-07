@@ -32,6 +32,7 @@ const PARENT_DIR = path.resolve(PROJECT_DIR, "..");
 const WATCH_DIRS = [
   path.join(PARENT_DIR, "loja_18314_MOEMA_FIN", "relatorios_focco"),
   path.join(PARENT_DIR, "loja_18314_MOEMA", "relatorios_carteira_mensal"),
+  path.join(PARENT_DIR, "loja_18314_MOEMA_CONTRATOS", "relatorios_focco"),
 ];
 
 const PYTHON_SCRIPT = path.join(PROJECT_DIR, "scripts", "transform_dre.py");

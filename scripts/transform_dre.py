@@ -21,3 +21,8 @@ if __name__ == '__main__':
         '--empresa', 'ITALINEA - DECORA INTERIORES LTDA',
         '--periodo', 'Janeiro a Julho / 2026',
     ])
+
+    # Projeção de contratos (eixo X da previsão de despesas com vendas) a
+    # partir do relatório de contratos da MOEMA.
+    import gerar_projecao_contratos  # noqa: E402
+    gerar_projecao_contratos.main()

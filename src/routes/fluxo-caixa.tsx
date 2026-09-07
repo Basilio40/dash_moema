@@ -18,8 +18,6 @@ import {
   ReferenceLine,
 } from "recharts";
 import { PeriodFilter, usePeriod, MESES_CURTOS } from "@/components/PeriodFilter";
-import { parse, addMonths, startOfMonth } from "date-fns";
-import { enUS } from "date-fns/locale";
 
 export const Route = createFileRoute("/fluxo-caixa")({
   head: () => ({
@@ -81,19 +79,16 @@ function FluxoPage() {
   const ultimoMes = realizadoData[realizadoData.length - 1]?.mes ?? "Ago/26";
 
   const hoje = new Date();
-  const inicioPeriodo = startOfMonth(hoje);
-  const fimPeriodo = addMonths(inicioPeriodo, 6);
 
-  const parseMesProjecao = (mes: string) => parse(mes, "MMM/yy", new Date(), { locale: enUS });
-
-  const projecaoSeries = projecaoContratos.series
-    .map((item) => ({ ...item, data: parseMesProjecao(item.mes) }))
-    .filter(
-      (item) =>
-        item.data >= inicioPeriodo &&
-        item.data < fimPeriodo &&
-        !["Jul/26", "Aug/26"].includes(item.mes),
-    )
+  // Eixo X do gráfico de previsão: meses da coluna "Previsão de Entrega" do
+  // relatório de contratos (loja_18314_MOEMA_CONTRATOS), agregando "Valor da
+  // Venda" e o nº de contratos (projetos) por mês. Rótulos já vêm em PT
+  // ("Set/26"), produzidos por scripts/gerar_projecao_contratos.py.
+  const projecaoSeries = (
+    projecaoContratos.series as { mes: string; valor: number; projetos: number }[]
+  )
+    .map((item) => ({ ...item, data: parseMesPrevisao(item.mes) }))
+    .filter((item): item is typeof item & { data: Date } => item.data !== null)
     .sort((a, b) => a.data.getTime() - b.data.getTime());
 
   const TAXAS_DESPESAS = {
@@ -101,20 +96,18 @@ function FluxoPage() {
     montagem: 0.1,
     liberador: 0.02,
   };
-  // Medição: quantidade de projetos no mês × R$ 180,00.
-  // Valor fixo provisório até termos a contagem real por mês no JSON.
+  // Medição: nº de projetos (contratos) com entrega prevista no mês × R$ 180,00.
   const VALOR_MEDICAO_POR_PROJETO = 180;
-  const PROJETOS_POR_MES_PADRAO = 10;
 
   const projecaoComDespesas = projecaoSeries.map((item) => {
-    const valor = item.valor / 100;
-    const projetos = (item as { projetos?: number }).projetos ?? PROJETOS_POR_MES_PADRAO;
+    const valor = item.valor; // já em reais no JSON
+    const projetos = item.projetos;
     const transportadora = valor * TAXAS_DESPESAS.transportadora;
     const medicao = projetos * VALOR_MEDICAO_POR_PROJETO;
     const montagem = valor * TAXAS_DESPESAS.montagem;
     const liberador = valor * TAXAS_DESPESAS.liberador;
     const totalDespesas = transportadora + medicao + montagem + liberador;
-    return { ...item, valor, transportadora, medicao, montagem, liberador, totalDespesas };
+    return { ...item, valor, projetos, transportadora, medicao, montagem, liberador, totalDespesas };
   });
 
   // Une a previsão de entradas/saídas com a projeção de despesas com vendas,
@@ -138,7 +131,12 @@ function FluxoPage() {
         entradas: previsao ? mediaMovelEntradas : null,
         saidas: previsao?.saidas ?? null,
         despesasVendas: projecao?.totalDespesas ?? null,
-        saldo: previsao ? mediaMovelEntradas - previsao.saidas : null,
+        // Mesma dinâmica do gráfico Realizado (saldo = entradas - saídas),
+        // porém somando as despesas com vendas às saídas deste painel.
+        // Só existe quando há previsão de entradas para o mês (como na tabela).
+        saldo: previsao
+          ? mediaMovelEntradas - previsao.saidas - (projecao?.totalDespesas ?? 0)
+          : null,
       };
     });
 
@@ -224,6 +222,7 @@ function FluxoPage() {
               fill="#F59E0B"
               radius={[4, 4, 0, 0]}
             />
+            <Bar dataKey="saldo" name="Saldo" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
 
@@ -241,7 +240,7 @@ function FluxoPage() {
                   <th className="text-right py-2 px-2 font-medium">Montagem</th>
                   <th className="text-right py-2 px-2 font-medium">Liberador</th>
                   <th className="text-right py-2 px-2 font-medium">Despesas com vendas</th>
-                  <th className="text-right py-2 px-2 font-medium">Saídas + Despesas</th>
+                  <th className="text-right py-2 px-2 font-medium">Saidas Totais</th>
                   <th className="text-right py-2 pl-2 font-medium">Saldo previsto</th>
                 </tr>
               </thead>
