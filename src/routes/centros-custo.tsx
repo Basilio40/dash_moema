@@ -129,6 +129,16 @@ function CentrosCustoPage() {
     pctGanho: x.receita > 0 ? (x.aEntregar / x.receita) * 100 : 0,
   }));
 
+  const bottom10 = items
+    .filter((x) => x.aEntregar > 2000)
+    .sort((a, b) => (a.receita > 0 ? a.aEntregar / a.receita : 0) - (b.receita > 0 ? b.aEntregar / b.receita : 0))
+    .slice(0, 10)
+    .map((x) => ({
+      nome: x.centroCusto.slice(0, 22),
+      ganho: x.aEntregar,
+      pctGanho: x.receita > 0 ? (x.aEntregar / x.receita) * 100 : 0,
+    }));
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
       <PageHeader
@@ -137,7 +147,7 @@ function CentrosCustoPage() {
         actions={<PeriodFilter value={period} />}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <Kpi
           label="Custo total"
           value={brlCompact(resumo.totalCusto)}
@@ -150,14 +160,9 @@ function CentrosCustoPage() {
           tone="positive"
         />
         <Kpi
-          label="A entregar (líquido)"
-          value={brlCompact(resumo.totalAEntregar)}
-          tone="negative"
-          hint={`${resumo.numClientes} clientes · receita − custo`}
-        />
-        <Kpi
           label="Ticket médio a entregar"
           value={brlCompact(resumo.totalAEntregar / Math.max(1, resumo.numClientes))}
+          hint={`${resumo.numClientes} clientes · receita − custo`}
         />
       </div>
 
@@ -213,6 +218,51 @@ function CentrosCustoPage() {
           </BarChart>
         </ResponsiveContainer>
       </Panel>
+
+      <div className="mt-8">
+        <Panel title="Top 10 clientes com menor ganho % (acima de R$ 2.000)">
+          <ResponsiveContainer width="100%" height={360}>
+            <BarChart data={bottom10} layout="vertical" margin={{ left: 60 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis
+                xAxisId="value"
+                type="number"
+                tickFormatter={brlCompact}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              />
+              <XAxis
+                xAxisId="pct"
+                type="number"
+                orientation="top"
+                tickFormatter={(v) => `${v}%`}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="nome"
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+                width={140}
+              />
+              <Tooltip content={<GanhoTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar
+                xAxisId="value"
+                dataKey="ganho"
+                name="Ganho"
+                fill="#F87171"
+                radius={[0, 4, 4, 0]}
+              />
+              <Bar
+                xAxisId="pct"
+                dataKey="pctGanho"
+                name="% Ganho / Receita"
+                fill="#22D3EE"
+                radius={[0, 4, 4, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Panel>
+      </div>
 
       <div className="mt-8">
         <Panel title="Detalhamento por cliente / centro de custo">

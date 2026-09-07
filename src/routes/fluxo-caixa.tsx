@@ -89,6 +89,10 @@ function FluxoPage() {
   )
     .map((item) => ({ ...item, data: parseMesPrevisao(item.mes) }))
     .filter((item): item is typeof item & { data: Date } => item.data !== null)
+    // Exclui os meses já realizados (Jan–Ago/26): o painel mostra a projeção a
+    // partir do mês atual (Set/26). Nota: a chave usa o índice do mês, então
+    // Set/26 = "2026-08".
+    .filter((item) => chaveMes(item.data) >= "2026-08")
     .sort((a, b) => a.data.getTime() - b.data.getTime());
 
   const TAXAS_DESPESAS = {
@@ -131,6 +135,11 @@ function FluxoPage() {
         entradas: previsao ? mediaMovelEntradas : null,
         saidas: previsao?.saidas ?? null,
         despesasVendas: projecao?.totalDespesas ?? null,
+        // Saídas totais do mês: previstas + despesas com vendas (usada no gráfico)
+        saidasTotais:
+          previsao || projecao
+            ? (previsao?.saidas ?? 0) + (projecao?.totalDespesas ?? 0)
+            : null,
         // Mesma dinâmica do gráfico Realizado (saldo = entradas - saídas),
         // porém somando as despesas com vendas às saídas deste painel.
         // Só existe quando há previsão de entradas para o mês (como na tabela).
@@ -209,19 +218,7 @@ function FluxoPage() {
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <ReferenceLine y={0} stroke="var(--border)" />
             <Bar dataKey="entradas" name="Entradas previstas" fill="#10B981" radius={[4, 4, 0, 0]} />
-            <Bar
-              dataKey="saidas"
-              name="Saídas previstas"
-              stackId="saidas"
-              fill="#EF4444"
-            />
-            <Bar
-              dataKey="despesasVendas"
-              name="Despesas com vendas"
-              stackId="saidas"
-              fill="#F59E0B"
-              radius={[4, 4, 0, 0]}
-            />
+            <Bar dataKey="saidasTotais" name="Saídas Totais" fill="#EF4444" radius={[4, 4, 0, 0]} />
             <Bar dataKey="saldo" name="Saldo" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

@@ -9,7 +9,11 @@ export function DarkTooltip({ active, payload, label }: any) {
         <div key={i} className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: p.color || p.fill }} />
           <span className="text-muted-foreground">{p.name}:</span>
-          <span className="font-medium text-foreground">{brl(p.value)}</span>
+          <span className="font-medium text-foreground">
+            {String(p.name).includes("%")
+              ? `${Number(p.value).toFixed(1)}%`
+              : brl(p.value)}
+          </span>
         </div>
       ))}
     </div>

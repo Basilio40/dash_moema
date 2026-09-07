@@ -54,7 +54,6 @@ export function DrePage() {
   const totalNaoEntregue =
     (data as Record<string, unknown> as { naoEntreguesResumo?: { totalAEntregar?: number } })
       .naoEntreguesResumo?.totalAEntregar ?? 0;
-  const numClientesPendentes = data.naoEntregues.filter((n) => n.aEntregar > 0).length;
   const totalClientes = data.clientes.length;
   const colunas = colunasMes(period.mes);
 
@@ -74,7 +73,7 @@ export function DrePage() {
         actions={<PeriodFilter value={period} />}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Kpi label="Receita Bruta" value={brlCompact(totals.rec)} tone="positive" />
         <Kpi label="Despesas" value={brlCompact(totals.desp)} tone="negative" />
         <Kpi
@@ -87,14 +86,6 @@ export function DrePage() {
           value={pct(margemMedia)}
           tone={margemMedia >= 0 ? "positive" : "negative"}
         />
-        <Link to="/fornecedores" className="block hover:scale-[1.02] hover:kpi-glow transition-all">
-          <Kpi
-            label="A Entregar (líquido)"
-            value={brlCompact(totalNaoEntregue)}
-            tone="warning"
-            hint={`${numClientesPendentes} clientes · receita − custo · ver pareto →`}
-          />
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">

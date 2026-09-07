@@ -22,11 +22,11 @@ import { PeriodFilter, usePeriod } from "@/components/PeriodFilter";
 export const Route = createFileRoute("/fornecedores")({
   head: () => ({
     meta: [
-      { title: "Fornecedores — Compras a Entregar — Italinea 2026" },
+      { title: "Fornecedores — Gastos a Entregar — Italinea 2026" },
       {
         name: "description",
         content:
-          "Pareto de gastos por fornecedor em compras a entregar (grupo 4.02). Detalhamento dos comprometimentos por supplier.",
+          "Pareto de custos por fornecedor em pedidos a entregar (grupos 4.02, 4.03 e 4.07). Detalhamento dos comprometimentos por supplier.",
       },
     ],
   }),
@@ -38,7 +38,6 @@ type Item = {
   titulo: string;
   obs: string;
   valor: number;
-  valorEntrega?: number;
   conta: string;
   fornecedor: string;
   tipo: string;
@@ -69,13 +68,11 @@ function FornecedoresPage() {
       }))
       .filter((cc) => cc.itens.length > 0)
       .forEach((cc) => {
-        const somaItens = cc.itens.reduce((s, it) => s + it.valor, 0);
-        const fator = somaItens > 0 ? cc.aEntregar / somaItens : 0;
         cc.itens.forEach((it) => {
           const key = it.fornecedor || "(sem fornecedor)";
           const cur = map.get(key) ?? { total: 0, itens: [] };
-          cur.total += it.valor * fator;
-          cur.itens.push({ ...it, centroCusto: cc.centroCusto, valorEntrega: it.valor * fator });
+          cur.total += it.valor;
+          cur.itens.push({ ...it, centroCusto: cc.centroCusto });
           map.set(key, cur);
         });
       });
@@ -111,17 +108,17 @@ function FornecedoresPage() {
       </Link>
 
       <PageHeader
-        title="Fornecedores — Pareto de Gastos a Entregar"
-        subtitle="Distribuição do saldo a entregar (líquido) por fornecedor. Inclui compras/fretes (4.02), comissões (4.03) e financeiro (4.07), rateados pela proporção do saldo líquido de cada cliente."
+        title="Fornecedores — Pareto de Gastos"
+        subtitle="Distribuição dos custos por fornecedor nos pedidos a entregar. Inclui compras/fretes (4.02), comissões (4.03) e financeiro (4.07) pelo valor de custo real de cada título."
         actions={<PeriodFilter value={period} />}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Kpi
-          label="Total a entregar"
+          label="Total comprometido"
           value={brlCompact(totalGeral)}
           tone="warning"
-          hint={period.mes === "all" ? "Comprometido líquido" : `Em ${period.mes}/26`}
+          hint={period.mes === "all" ? "Custo dos títulos" : `Em ${period.mes}/26`}
         />
         <Kpi
           label="Nº de fornecedores"
@@ -207,8 +204,8 @@ function FornecedoresPage() {
         </ResponsiveContainer>
         <div className="mt-2 text-[11px] text-muted-foreground">
           Linha vermelha tracejada marca 80% — regra de Pareto. Fornecedores à esquerda desse limite
-          concentram a maior parte dos gastos. Valores proporcionais ao saldo líquido a entregar por
-          cliente (receita menos custo de compras 4.02, comissões 4.03 e financeiro 4.07).
+          concentram a maior parte dos gastos. Valores de custo real dos títulos (compras 4.02,
+          comissões 4.03 e financeiro 4.07) dos pedidos ainda não entregues.
         </div>
       </Panel>
 
@@ -274,13 +271,12 @@ function FornecedoresPage() {
                             <th className="text-left py-1">Conta</th>
                             <th className="text-left py-1">Observação</th>
                             <th className="text-right py-1">Valor custo</th>
-                            <th className="text-right py-1">A entregar</th>
                           </tr>
                         </thead>
                         <tbody className="font-mono">
                           {f.itens
                             .slice()
-                            .sort((a, b) => (b.valorEntrega ?? 0) - (a.valorEntrega ?? 0))
+                            .sort((a, b) => b.valor - a.valor)
                             .map((it, i) => (
                               <tr key={i} className="border-t border-border/30">
                                 <td className="py-1 text-muted-foreground">{it.mes}</td>
@@ -295,18 +291,15 @@ function FornecedoresPage() {
                                 <td className="py-1 text-muted-foreground max-w-[200px] truncate">
                                   {it.obs}
                                 </td>
-                                <td className="py-1 text-right text-muted-foreground">
-                                  {brl(it.valor)}
-                                </td>
                                 <td className="py-1 text-right text-[color:var(--warning)]">
-                                  {brl(it.valorEntrega ?? 0)}
+                                  {brl(it.valor)}
                                 </td>
                               </tr>
                             ))}
                         </tbody>
                         <tfoot>
                           <tr className="border-t border-border/60 font-semibold">
-                            <td colSpan={7} className="py-1 text-right text-muted-foreground">
+                            <td colSpan={6} className="py-1 text-right text-muted-foreground">
                               Total {f.fornecedor.slice(0, 24)}:
                             </td>
                             <td className="py-1 text-right text-[color:var(--warning)]">
