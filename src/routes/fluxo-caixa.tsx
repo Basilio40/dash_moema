@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import data from "@/data/dashboard.json";
+import details from "@/data/dre-details.json";
 import projecaoContratos from "@/data/projecao-contratos.json";
 import realizadoFluxo from "@/data/fluxo-caixa-realizado.json";
 import previsaoFluxo from "@/data/fluxo-caixa-previsao.json";
@@ -64,13 +65,52 @@ function FluxoPage() {
   const rotuloMes = (d: Date) => `${MESES_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
 
   const excluirMesPrevisao = (m: string) => !["Jul/26", "Ago/26"].includes(m);
+
+  // Custo fixo do negócio: média dos últimos 3 meses do grupo 4.04
+  // (4.04.01 REMUNERAÇÃO FIXA + 4.04.02 GASTOS GERAIS ADMINISTRATIVOS).
+  // Usado quando a coluna "Saídas previstas" está zerada em algum mês.
+  const dreItems = details as unknown as Record<string, number | string>[];
+  const custoFixoPorMes = MESES_CURTOS.map((m) => {
+    const remFixa = dreItems.find((g) => g.itemCod === "4.04.01");
+    const gastosGerais = dreItems.find((g) => g.itemCod === "4.04.02");
+    return (Number(remFixa?.[m] ?? 0) || 0) + (Number(gastosGerais?.[m] ?? 0) || 0);
+  }).filter((v) => v > 0);
+  const custoFixoMensal =
+    custoFixoPorMes.slice(-3).reduce((s, v) => s + v, 0) / Math.min(3, custoFixoPorMes.length);
+
   const previsaoData = (previsaoFluxo as { mes: string; entradas: number; saidas: number }[])
     .filter((d) => filtroMes(d.mes) && excluirMesPrevisao(d.mes))
-    .map((d) => ({
-      ...d,
+    .map((d) => {
+      // Saídas zeradas → assume o custo fixo (4.04.01 + 4.04.02, média 3 meses)
+      const usaCustoFixo = d.saidas <= 0;
+      const saidas = usaCustoFixo ? custoFixoMensal : d.saidas;
+      return {
+        ...d,
+        entradas: mediaMovelEntradas,
+        saidas,
+        saldo: mediaMovelEntradas - saidas,
+        usaCustoFixo,
+      };
+    });
+
+  // Set/27 não existe no relatório de previsão; incluído para cobrir o último
+  // mês da projeção de contratos, com entradas pela média móvel e saídas pelo
+  // custo fixo (mesma regra dos meses zerados).
+  if (period.mes === "all" || "Set".startsWith(period.mes)) {
+    previsaoData.push({
+      mes: "Set/27",
       entradas: mediaMovelEntradas,
-      saldo: mediaMovelEntradas - d.saidas,
-    }));
+      saidas: custoFixoMensal,
+      saldo: mediaMovelEntradas - custoFixoMensal,
+      usaCustoFixo: true,
+    });
+  }
+
+  // Meses com saídas estimadas por custo fixo: sem despesas com vendas
+  // (nem no gráfico/tabela, nem nos totais).
+  const mesesCustoFixo = new Set(
+    previsaoData.filter((d) => d.usaCustoFixo).map((d) => chaveMes(parseMesPrevisao(d.mes)!)),
+  );
 
   const totEntradas = realizadoData.reduce((s, x) => s + x.entradas, 0);
   const totSaidas = realizadoData.reduce((s, x) => s + x.saidas, 0);
@@ -122,7 +162,11 @@ function FluxoPage() {
       .filter((d): d is typeof d & { data: Date } => d.data !== null)
       .map((d) => [chaveMes(d.data), d]),
   );
-  const projecaoPorChave = new Map(projecaoComDespesas.map((d) => [chaveMes(d.data), d]));
+  const projecaoPorChave = new Map(
+    projecaoComDespesas
+      .filter((d) => !mesesCustoFixo.has(chaveMes(d.data)))
+      .map((d) => [chaveMes(d.data), d]),
+  );
 
   const previsaoUnificada = Array.from(new Set([...previsaoPorChave.keys(), ...projecaoPorChave.keys()]))
     .sort()
@@ -149,7 +193,9 @@ function FluxoPage() {
       };
     });
 
-  const totaisDespesas = projecaoComDespesas.reduce(
+  const totaisDespesas = projecaoComDespesas
+    .filter((x) => !mesesCustoFixo.has(chaveMes(x.data)))
+    .reduce(
     (s, x) => ({
       transportadora: s.transportadora + x.transportadora,
       medicao: s.medicao + x.medicao,
