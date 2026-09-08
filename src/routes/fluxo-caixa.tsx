@@ -68,7 +68,7 @@ function FluxoPage() {
 
   // Custo fixo do negócio: média dos últimos 3 meses do grupo 4.04
   // (4.04.01 REMUNERAÇÃO FIXA + 4.04.02 GASTOS GERAIS ADMINISTRATIVOS).
-  // Usado quando a coluna "Saídas previstas" está zerada em algum mês.
+  // Usado quando a coluna "Saídas previstas" está zerada ou abaixo de R$ 1 mil.
   const dreItems = details as unknown as Record<string, number | string>[];
   const custoFixoPorMes = MESES_CURTOS.map((m) => {
     const remFixa = dreItems.find((g) => g.itemCod === "4.04.01");
@@ -81,8 +81,9 @@ function FluxoPage() {
   const previsaoData = (previsaoFluxo as { mes: string; entradas: number; saidas: number }[])
     .filter((d) => filtroMes(d.mes) && excluirMesPrevisao(d.mes))
     .map((d) => {
-      // Saídas zeradas → assume o custo fixo (4.04.01 + 4.04.02, média 3 meses)
-      const usaCustoFixo = d.saidas <= 0;
+      // Saídas zeradas ou abaixo de R$ 1 mil → assume o custo fixo
+      // (4.04.01 + 4.04.02, média 3 meses)
+      const usaCustoFixo = d.saidas < 1000;
       const saidas = usaCustoFixo ? custoFixoMensal : d.saidas;
       return {
         ...d,
