@@ -86,6 +86,7 @@ function GanhoTooltip({ active, payload, label }: any) {
 function CentrosCustoPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [pagina, setPagina] = useState(1);
   const period = usePeriod();
 
   // Filtra itens por mês e recalcula totais por cliente quando um mês é selecionado.
@@ -115,6 +116,19 @@ function CentrosCustoPage() {
   const itensTabela = buscaNorm
     ? items.filter((x) => x.centroCusto.toLowerCase().includes(buscaNorm))
     : items;
+
+  // Paginação da tabela de detalhamento
+  const TAMANHO_PAGINA = 20;
+  const totalPaginas = Math.max(1, Math.ceil(itensTabela.length / TAMANHO_PAGINA));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const itensPagina = itensTabela.slice(
+    (paginaAtual - 1) * TAMANHO_PAGINA,
+    paginaAtual * TAMANHO_PAGINA,
+  );
+  const mudarBusca = (v: string) => {
+    setBusca(v);
+    setPagina(1);
+  };
 
   const resumo = {
     totalCusto: items.reduce((s, x) => s + x.totalCompra, 0),
@@ -270,16 +284,16 @@ function CentrosCustoPage() {
             <input
               type="search"
               value={busca}
-              onChange={(e) => setBusca(e.target.value)}
+              onChange={(e) => mudarBusca(e.target.value)}
               placeholder="Buscar cliente / centro de custo por nome…"
               className="w-full sm:w-80 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
             />
             <span className="text-xs text-muted-foreground">
-              {itensTabela.length} cliente(s) · {buscaNorm ? "filtrado pela busca" : "mostrando até 50"}
+              {itensTabela.length} cliente(s) · página {paginaAtual} de {totalPaginas}
             </span>
           </div>
           <div className="divide-y divide-border">
-            {itensTabela.slice(0, buscaNorm ? undefined : 50).map((f) => {
+            {itensPagina.map((f) => {
               const isOpen = open === f.centroCusto;
               // Agrupa os itens por categoria, preservando a ordem canônica.
               const catOrder = ["Compra e frete", "Comissões", "Financeiro"];
@@ -392,6 +406,43 @@ function CentrosCustoPage() {
               );
             })}
           </div>
+          {totalPaginas > 1 && (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border">
+              <button
+                onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                disabled={paginaAtual === 1}
+                className="px-2.5 py-1 rounded-md text-xs font-medium border border-border text-foreground hover:bg-panel-elevated disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPaginas || Math.abs(p - paginaAtual) <= 1)
+                .map((p, idx, arr) => (
+                  <span key={p} className="flex items-center gap-1.5">
+                    {idx > 0 && p - arr[idx - 1] > 1 && (
+                      <span className="text-xs text-muted-foreground">…</span>
+                    )}
+                    <button
+                      onClick={() => setPagina(p)}
+                      className={
+                        p === paginaAtual
+                          ? "px-2.5 py-1 rounded-md text-xs font-semibold bg-primary text-primary-foreground"
+                          : "px-2.5 py-1 rounded-md text-xs font-medium border border-border text-foreground hover:bg-panel-elevated"
+                      }
+                    >
+                      {p}
+                    </button>
+                  </span>
+                ))}
+              <button
+                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                disabled={paginaAtual === totalPaginas}
+                className="px-2.5 py-1 rounded-md text-xs font-medium border border-border text-foreground hover:bg-panel-elevated disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Próxima
+              </button>
+            </div>
+          )}
         </Panel>
       </div>
     </div>

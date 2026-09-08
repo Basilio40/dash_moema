@@ -107,12 +107,6 @@ function FluxoPage() {
     });
   }
 
-  // Meses com saídas estimadas por custo fixo: sem despesas com vendas
-  // (nem no gráfico/tabela, nem nos totais).
-  const mesesCustoFixo = new Set(
-    previsaoData.filter((d) => d.usaCustoFixo).map((d) => chaveMes(parseMesPrevisao(d.mes)!)),
-  );
-
   const totEntradas = realizadoData.reduce((s, x) => s + x.entradas, 0);
   const totSaidas = realizadoData.reduce((s, x) => s + x.saidas, 0);
   const saldoFinal = realizadoData.reduce((s, x) => s + x.saldo, 0);
@@ -164,9 +158,7 @@ function FluxoPage() {
       .map((d) => [chaveMes(d.data), d]),
   );
   const projecaoPorChave = new Map(
-    projecaoComDespesas
-      .filter((d) => !mesesCustoFixo.has(chaveMes(d.data)))
-      .map((d) => [chaveMes(d.data), d]),
+    projecaoComDespesas.map((d) => [chaveMes(d.data), d]),
   );
 
   const previsaoUnificada = Array.from(new Set([...previsaoPorChave.keys(), ...projecaoPorChave.keys()]))
@@ -194,9 +186,7 @@ function FluxoPage() {
       };
     });
 
-  const totaisDespesas = projecaoComDespesas
-    .filter((x) => !mesesCustoFixo.has(chaveMes(x.data)))
-    .reduce(
+  const totaisDespesas = projecaoComDespesas.reduce(
     (s, x) => ({
       transportadora: s.transportadora + x.transportadora,
       medicao: s.medicao + x.medicao,
