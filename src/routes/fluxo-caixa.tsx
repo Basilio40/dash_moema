@@ -44,10 +44,9 @@ function FluxoPage() {
 
   const dreGroups = (data as unknown as { dreGroups: Record<string, number | string>[] }).dreGroups;
 
-  // Meses reais considerados: Jul é descartado (junto com Ago) nas projeções,
-  // então a média móvel usa Abr/Mai/Jun (item 7.50.01 TOTAL DAS RECEITAS).
-  const MESES_EXCLUIDOS = ["Jul", "Ago"];
-  const mesesReaisBase = MESES_CURTOS.filter((m) => !MESES_EXCLUIDOS.includes(m));
+  // Meses reais: com Jul e Ago/26 já realizados no DRE, a média móvel usa os
+  // 3 últimos meses reais (Mai/Jun/Ago, item 7.50.01 TOTAL DAS RECEITAS).
+  const mesesReaisBase = MESES_CURTOS;
   const receitasMensais = mesesReaisBase.map((m) => {
     const grupo = dreGroups.find((g) => g.grupoCod === "3.01");
     return typeof grupo?.[m] === "number" ? Number(grupo[m]) : 0;

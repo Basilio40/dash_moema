@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { CalendarDays } from "lucide-react";
 
-export const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul"];
+export const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"];
 
 export const MES_OPCOES = [
   { value: "all", label: "Todos os meses" },
@@ -19,6 +19,7 @@ export const MES_OPCOES = [
   { value: "Mai", label: "Maio" },
   { value: "Jun", label: "Junho" },
   { value: "Jul", label: "Julho" },
+  { value: "Ago", label: "Agosto" },
 ];
 
 export const ANO_OPCOES = [{ value: "2026", label: "2026" }];
