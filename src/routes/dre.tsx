@@ -151,8 +151,8 @@ export function DrePage() {
               <ReferenceLine y={0} stroke="var(--border)" />
               <Bar dataKey="receitas" name="Receita" fill="#10B981" radius={[6, 6, 0, 0]} />
               <Bar
-                dataKey="despesas"
-                name="Break-even (despesas)"
+                dataKey="breakEven"
+                name="Break-even (7.70)"
                 fill="#F59E0B"
                 radius={[6, 6, 0, 0]}
               />
