@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { BarChart3, TrendingUp, Layers, Users, Truck } from "lucide-react";
+import { BarChart3, TrendingUp, Layers, Users, Truck, HandCoins } from "lucide-react";
 import { RefreshDataButton } from "./RefreshDataButton";
 
 const items = [
   { to: "/dre", label: "DRE Mensal", icon: BarChart3 },
   { to: "/fluxo-caixa", label: "Fluxo de Caixa", icon: TrendingUp },
+  { to: "/comissoes", label: "Comissões", icon: HandCoins },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/centros-custo", label: "Centros de Custo", icon: Layers },
   { to: "/carteira", label: "Carteira de Clientes", icon: Users },

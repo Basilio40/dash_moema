@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as FornecedoresRouteImport } from './routes/fornecedores'
 import { Route as FluxoCaixaRouteImport } from './routes/fluxo-caixa'
 import { Route as DreRouteImport } from './routes/dre'
+import { Route as ComissoesRouteImport } from './routes/comissoes'
 import { Route as CentrosCustoRouteImport } from './routes/centros-custo'
 import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const FluxoCaixaRoute = FluxoCaixaRouteImport.update({
 const DreRoute = DreRouteImport.update({
   id: '/dre',
   path: '/dre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComissoesRoute = ComissoesRouteImport.update({
+  id: '/comissoes',
+  path: '/comissoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CentrosCustoRoute = CentrosCustoRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/carteira': typeof CarteiraRoute
   '/centros-custo': typeof CentrosCustoRoute
+  '/comissoes': typeof ComissoesRoute
   '/dre': typeof DreRoute
   '/fluxo-caixa': typeof FluxoCaixaRoute
   '/fornecedores': typeof FornecedoresRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/carteira': typeof CarteiraRoute
   '/centros-custo': typeof CentrosCustoRoute
+  '/comissoes': typeof ComissoesRoute
   '/dre': typeof DreRoute
   '/fluxo-caixa': typeof FluxoCaixaRoute
   '/fornecedores': typeof FornecedoresRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/carteira': typeof CarteiraRoute
   '/centros-custo': typeof CentrosCustoRoute
+  '/comissoes': typeof ComissoesRoute
   '/dre': typeof DreRoute
   '/fluxo-caixa': typeof FluxoCaixaRoute
   '/fornecedores': typeof FornecedoresRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/carteira'
     | '/centros-custo'
+    | '/comissoes'
     | '/dre'
     | '/fluxo-caixa'
     | '/fornecedores'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/carteira'
     | '/centros-custo'
+    | '/comissoes'
     | '/dre'
     | '/fluxo-caixa'
     | '/fornecedores'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/carteira'
     | '/centros-custo'
+    | '/comissoes'
     | '/dre'
     | '/fluxo-caixa'
     | '/fornecedores'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CarteiraRoute: typeof CarteiraRoute
   CentrosCustoRoute: typeof CentrosCustoRoute
+  ComissoesRoute: typeof ComissoesRoute
   DreRoute: typeof DreRoute
   FluxoCaixaRoute: typeof FluxoCaixaRoute
   FornecedoresRoute: typeof FornecedoresRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/dre'
       fullPath: '/dre'
       preLoaderRoute: typeof DreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comissoes': {
+      id: '/comissoes'
+      path: '/comissoes'
+      fullPath: '/comissoes'
+      preLoaderRoute: typeof ComissoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/centros-custo': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CarteiraRoute: CarteiraRoute,
   CentrosCustoRoute: CentrosCustoRoute,
+  ComissoesRoute: ComissoesRoute,
   DreRoute: DreRoute,
   FluxoCaixaRoute: FluxoCaixaRoute,
   FornecedoresRoute: FornecedoresRoute,

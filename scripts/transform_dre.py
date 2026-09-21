@@ -46,3 +46,8 @@ if __name__ == '__main__':
     # partir do relatório de contratos da MOEMA.
     import gerar_projecao_contratos  # noqa: E402
     gerar_projecao_contratos.main()
+
+    # Comissões por função (aba Comissões, complementar ao Fluxo de Caixa):
+    # Montador/Liberador/Vendedor/Gerente/Medidor a partir da assinatura.
+    import gerar_comissoes  # noqa: E402
+    gerar_comissoes.main()
