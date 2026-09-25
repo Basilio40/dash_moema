@@ -32,7 +32,6 @@ type ComissaoMes = {
   mes: string;
   contratos: number;
   valorAssinado?: number;
-  valorEntregue?: number;
   montador: number;
   liberador: number;
   vendedor: number;
@@ -51,8 +50,50 @@ const FUNCOES = [
   { key: "medidor", nome: "Medidor", regra: "valor fixo de R$ 3.960 por mês", cor: "#F472B6" },
 ] as const;
 
-// Gráfico de linhas por função + Total (compartilhado pelas visões
-// por Assinatura e por Previsão de Entrega).
+// Fim fixo da projeção exibida: dezembro de 2027.
+const FIM_PROJECAO = { ano: 2027, mes: 12 };
+
+const ABR_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const NUM_MESES: Record<string, number> = Object.fromEntries(
+  ABR_MESES.map((abr, i) => [abr, i + 1]),
+);
+
+type ChaveMes = { ano: number; mes: number };
+
+// "Out/26" -> { ano: 2026, mes: 10 }
+function chaveMes(rotulo: string): ChaveMes | null {
+  const [abr, ano] = rotulo.split("/");
+  const mes = NUM_MESES[abr];
+  return mes && ano ? { mes, ano: 2000 + Number(ano) } : null;
+}
+
+// { ano: 2026, mes: 10 } -> "Out/26"
+function rotuloMes(chave: ChaveMes): string {
+  return `${ABR_MESES[chave.mes - 1]}/${String(chave.ano).slice(2)}`;
+}
+
+function proximaChave(chave: ChaveMes): ChaveMes {
+  return chave.mes === 12
+    ? { ano: chave.ano + 1, mes: 1 }
+    : { ano: chave.ano, mes: chave.mes + 1 };
+}
+
+function depoisDe(a: ChaveMes, b: ChaveMes): boolean {
+  return a.ano > b.ano || (a.ano === b.ano && a.mes > b.mes);
+}
+
+// Mês de referência do relatório (ex.: "SET_2026.xlsx" -> set/2026).
+// Os meses até ele já estão decorridos; a projeção começa no seguinte —
+// o corte acompanha automaticamente o relatório mais recente.
+function mesReferencia(fonte: string): ChaveMes | null {
+  const m = /^([A-Za-z]{3})_(\d{4})/.exec(fonte);
+  if (!m) return null;
+  const abr = m[1][0].toUpperCase() + m[1].slice(1).toLowerCase();
+  const mes = NUM_MESES[abr];
+  return mes ? { mes, ano: Number(m[2]) } : null;
+}
+
+// Gráfico de linhas por função + Total.
 function GraficoComissoes({ dados }: { dados: ComissaoMes[] }) {
   return (
     <ResponsiveContainer width="100%" height={380}>
@@ -90,19 +131,8 @@ function GraficoComissoes({ dados }: { dados: ComissaoMes[] }) {
   );
 }
 
-// Tabela mensal com rodapé de totais (compartilhada pelas visões por
-// Assinatura e por Previsão de Entrega).
-function TabelaComissoes({
-  series,
-  valorKey,
-  valorLabel,
-  contratosLabel,
-}: {
-  series: ComissaoMes[];
-  valorKey: "valorAssinado" | "valorEntregue";
-  valorLabel: string;
-  contratosLabel: string;
-}) {
+// Tabela mensal com rodapé de totais.
+function TabelaComissoes({ series }: { series: ComissaoMes[] }) {
   const totais = FUNCOES.reduce(
     (acc, f) => ({ ...acc, [f.key]: series.reduce((s, m) => s + m[f.key], 0) }),
     {} as Record<(typeof FUNCOES)[number]["key"], number>,
@@ -113,8 +143,8 @@ function TabelaComissoes({
         <thead className="text-xs uppercase text-muted-foreground border-b border-border">
           <tr>
             <th className="text-left py-2 pr-4 font-medium">Mês</th>
-            <th className="text-right py-2 px-2 font-medium">{contratosLabel}</th>
-            <th className="text-right py-2 px-2 font-medium">{valorLabel}</th>
+            <th className="text-right py-2 px-2 font-medium">Contratos assinados</th>
+            <th className="text-right py-2 px-2 font-medium">Valor assinado</th>
             {FUNCOES.map((f) => (
               <th key={f.key} className="text-right py-2 px-2 font-medium">
                 {f.nome}
@@ -134,7 +164,7 @@ function TabelaComissoes({
                 {item.contratos || "—"}
               </td>
               <td className="text-right py-2 px-2 text-muted-foreground">
-                {item[valorKey] ? brlCompact(Number(item[valorKey])) : "—"}
+                {item.valorAssinado ? brlCompact(Number(item.valorAssinado)) : "—"}
               </td>
               {FUNCOES.map((f) => (
                 <td key={f.key} className="text-right py-2 px-2 text-muted-foreground">
@@ -154,7 +184,7 @@ function TabelaComissoes({
               {series.reduce((s, m) => s + m.contratos, 0)}
             </td>
             <td className="text-right py-2 px-2 text-foreground">
-              {brlCompact(series.reduce((s, m) => s + (m[valorKey] ?? 0), 0))}
+              {brlCompact(series.reduce((s, m) => s + (m.valorAssinado ?? 0), 0))}
             </td>
             {FUNCOES.map((f) => (
               <td key={f.key} className="text-right py-2 px-2 text-foreground">
@@ -178,30 +208,54 @@ function ComissoesPage() {
     numContratos: number;
     mesInicio: string;
     mesFim: string;
+    regras: { medidor: { valorMensal: number } };
     series: ComissaoMes[];
-    seriesEntrega: ComissaoMes[];
   };
-  // Teste: apenas 2026 (meses ".../26"), com as séries exibidas em linhas.
-  const series = dados.series.filter((m) => m.mes.endsWith("/26"));
-  // Visão por Previsão de Entrega: mesmas regras, data-base trocada —
-  // apenas 2026 e 2027.
-  const seriesEntrega = dados.seriesEntrega.filter((m) => /\/(26|27)$/.test(m.mes));
-  const mesInicioEntrega = seriesEntrega[0]?.mes ?? "";
-  const mesFimEntrega = seriesEntrega[seriesEntrega.length - 1]?.mes ?? "";
-  const mesInicio = series[0]?.mes ?? dados.mesInicio;
-  const mesFim = series[series.length - 1]?.mes ?? dados.mesFim;
-  const contratosAno = series.reduce((s, m) => s + m.contratos, 0);
-  const baseAssinadaAno = series.reduce((s, m) => s + (m.valorAssinado ?? 0), 0);
+  const valorMedidor = dados.regras?.medidor?.valorMensal ?? 3960;
 
-  const totalProjetado = series.reduce((s, m) => s + m.total, 0);
-  const mediaMensal = totalProjetado / series.length;
-  const pico = series.reduce((a, b) => (b.total > a.total ? b : a), series[0]);
+  // Apenas a projeção: descarta os meses já decorridos (até o mês de
+  // referência do relatório) e estende a linha do tempo até dez/2027 —
+  // após o último lançamento dos contratos assinados permanece somente
+  // o custo fixo do Medidor.
+  const referencia = mesReferencia(dados.fonte);
+  const futuros = referencia
+    ? dados.series.filter((m) => {
+        const chave = chaveMes(m.mes);
+        return chave !== null && depoisDe(chave, referencia);
+      })
+    : dados.series;
+  const mesFimDados = dados.series[dados.series.length - 1]?.mes ?? dados.mesFim;
+
+  const projecao: ComissaoMes[] = [...futuros];
+  let chave = chaveMes(projecao[projecao.length - 1]?.mes ?? mesFimDados)
+    ?? (referencia ? proximaChave(referencia) : FIM_PROJECAO);
+  while (depoisDe(FIM_PROJECAO, chave)) {
+    chave = proximaChave(chave);
+    projecao.push({
+      mes: rotuloMes(chave),
+      contratos: 0,
+      valorAssinado: 0,
+      montador: 0,
+      liberador: 0,
+      vendedor: 0,
+      gerente: 0,
+      medidor: valorMedidor,
+      total: valorMedidor,
+    });
+  }
+
+  const mesInicio = projecao[0]?.mes ?? dados.mesInicio;
+  const mesFim = projecao[projecao.length - 1]?.mes ?? dados.mesFim;
+
+  const totalProjetado = projecao.reduce((s, m) => s + m.total, 0);
+  const mediaMensal = totalProjetado / projecao.length;
+  const pico = projecao.reduce((a, b) => (b.total > a.total ? b : a), projecao[0]);
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto">
       <PageHeader
         title="Comissões"
-        subtitle={`Projeção mensal por função a partir da assinatura dos contratos — complementar ao Fluxo de Caixa (apenas 2026: ${mesInicio} a ${mesFim})`}
+        subtitle={`Projeção mensal por função a partir da assinatura dos contratos — apenas meses futuros: ${mesInicio} a ${mesFim}`}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -209,61 +263,33 @@ function ComissoesPage() {
           label="Total projetado"
           value={brlCompact(totalProjetado)}
           tone="negative"
-          hint={`${series.length} meses (${mesInicio}–${mesFim})`}
+          hint={`${projecao.length} meses (${mesInicio}–${mesFim})`}
         />
         <Kpi label="Média mensal" value={brlCompact(mediaMensal)} tone="warning" />
         <Kpi label="Mês de pico" value={pico.mes} tone="warning" hint={brlCompact(pico.total)} />
         <Kpi
           label="Base assinada"
-          value={brlCompact(baseAssinadaAno)}
+          value={brlCompact(dados.totalAssinado)}
           tone="positive"
-          hint={`${contratosAno} contratos em ${mesInicio}–${mesFim} (${dados.fonte})`}
+          hint={`${dados.numContratos} contratos no relatório ${dados.fonte}`}
         />
       </div>
 
-      <Panel title="Comissões por Função — Projeção Mensal por Assinatura (2026)">
-        <GraficoComissoes dados={series} />
+      <Panel title={`Comissões por Função — Projeção Mensal por Assinatura (${mesInicio}–${mesFim})`}>
+        <GraficoComissoes dados={projecao} />
         <p className="mt-3 text-xs text-muted-foreground">
           Regras de lançamento: Montador — 10% do valor da venda, 65 dias após a
           assinatura; Liberador — 2%, Vendedor — 6% e Gerente — 5% do valor da
-          venda, no mês subsequente à assinatura; Medidor — valor fixo de R$
-          3.960 por mês em toda a linha do tempo.
+          venda, no mês subsequente à assinatura; Medidor — valor fixo de R${" "}
+          {brl(valorMedidor)} por mês em toda a linha do tempo. A partir de{" "}
+          {mesFimDados}, com todos os contratos assinados já lançados, resta
+          apenas o custo fixo do Medidor projetado até {mesFim}.
         </p>
       </Panel>
 
       <div className="mt-6">
-        <Panel title="Comissões por Função — Projeção Mensal por Previsão de Entrega (2026–2027)">
-          <GraficoComissoes dados={seriesEntrega} />
-          <p className="mt-3 text-xs text-muted-foreground">
-            Mesmas regras, porém com a data de Previsão de Entrega como
-            data-base: Montador — 10% do valor da venda, 65 dias após a entrega
-            prevista; Liberador — 2%, Vendedor — 6% e Gerente — 5% do valor da
-            venda, no mês subsequente à entrega prevista; Medidor — valor fixo
-            de R$ 3.960 por mês em toda a linha do tempo ({mesInicioEntrega} a{" "}
-            {mesFimEntrega}).
-          </p>
-        </Panel>
-      </div>
-
-      <div className="mt-6">
-        <Panel title="Detalhamento mensal — por Assinatura (2026)">
-          <TabelaComissoes
-            series={series}
-            valorKey="valorAssinado"
-            valorLabel="Valor assinado"
-            contratosLabel="Contratos assinados"
-          />
-        </Panel>
-      </div>
-
-      <div className="mt-6">
-        <Panel title="Detalhamento mensal — por Previsão de Entrega (2026–2027)">
-          <TabelaComissoes
-            series={seriesEntrega}
-            valorKey="valorEntregue"
-            valorLabel="Valor com entrega prevista"
-            contratosLabel="Contratos com entrega prevista"
-          />
+        <Panel title={`Detalhamento mensal — por Assinatura (projeção ${mesInicio}–${mesFim})`}>
+          <TabelaComissoes series={projecao} />
         </Panel>
       </div>
     </div>
