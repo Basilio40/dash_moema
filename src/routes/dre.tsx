@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import data from "@/data/dashboard.json";
-import details from "@/data/dre-details.json";
+import { carregarDashboard, carregarDreDetails } from "@/lib/dados-remotos";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact, pct } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -24,7 +23,7 @@ import {
   colunasMes,
   valorMes,
 } from "@/components/PeriodFilter";
-import { ajustarDespesas } from "@/lib/despesas";
+import { ajustarDespesas, type ItemDre } from "@/lib/despesas";
 
 export const Route = createFileRoute("/dre")({
   head: () => ({
@@ -36,15 +35,22 @@ export const Route = createFileRoute("/dre")({
       },
     ],
   }),
+  // Dados do repo dados_italinea (em produção) ou JSONs locais (em dev),
+  // com fallback estático se o repo estiver inacessível.
+  loader: async () => ({
+    data: await carregarDashboard(),
+    details: await carregarDreDetails(),
+  }),
   component: DrePage,
 });
 
 export function DrePage() {
+  const { data, details } = Route.useLoaderData();
   const [filtro, setFiltro] = useState<"TODOS" | "RECEITAS" | "DESPESAS">("TODOS");
   const [expandido, setExpandido] = useState<string | null>(null);
   const period = usePeriod();
   const dreFiltered = filterByMes(data.dreMonth, period.mes);
-  const dreAjustado = ajustarDespesas(dreFiltered);
+  const dreAjustado = ajustarDespesas(dreFiltered, details as unknown as ItemDre[]);
   const totals = dreAjustado.reduce(
     (a, m) => ({ rec: a.rec + m.receitas, desp: a.desp + m.despesas }),
     { rec: 0, desp: 0 },

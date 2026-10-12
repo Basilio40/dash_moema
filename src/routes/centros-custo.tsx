@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import data from "@/data/dashboard.json";
+import { carregarDashboard } from "@/lib/dados-remotos";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import {
@@ -27,6 +27,8 @@ export const Route = createFileRoute("/centros-custo")({
       },
     ],
   }),
+  // Dados do repo dados_italinea (em produção) ou JSON local (em dev).
+  loader: () => carregarDashboard(),
   component: CentrosCustoPage,
 });
 
@@ -84,6 +86,7 @@ function GanhoTooltip({ active, payload, label }: any) {
 }
 
 function CentrosCustoPage() {
+  const data = Route.useLoaderData();
   const [open, setOpen] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [pagina, setPagina] = useState(1);

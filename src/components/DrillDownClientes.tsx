@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import data from "@/data/dashboard.json";
+import type { Dashboard } from "@/lib/dados-remotos";
 import { Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -18,7 +18,12 @@ type NumRec = Record<string, number>;
 
 type ClienteRec = { cliente: string; primeiroMes: string } & NumRec;
 
-export function DrillDownClientes({ mes }: { mes: string }) {
+/**
+ * Componente de drill-down por cliente. Recebe `data` por prop (vindo do
+ * loader da rota que o renderizar) — hoje não é usado por nenhuma rota,
+ * por isso a prop é obrigatória: força quem usar a decidir a fonte do dado.
+ */
+export function DrillDownClientes({ mes, data }: { mes: string; data: Dashboard }) {
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState<string | null>(null);
   const colunas = colunasMes(mes);

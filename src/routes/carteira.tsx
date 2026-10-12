@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import data from "@/data/dashboard.json";
+import { carregarDashboard } from "@/lib/dados-remotos";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -32,12 +32,15 @@ export const Route = createFileRoute("/carteira")({
       },
     ],
   }),
+  // Dados do repo dados_italinea (em produção) ou JSON local (em dev).
+  loader: () => carregarDashboard(),
   component: CarteiraPage,
 });
 
 type NumRec = Record<string, number>;
 
 function CarteiraPage() {
+  const data = Route.useLoaderData();
   const period = usePeriod();
   const cart = filterByMes(data.carteira, period.mes);
   const clientes = (data as Record<string, unknown>).clientes as unknown as Array<

@@ -1,52 +1,12 @@
 [
   {
-    "mes": "Set/26",
-    "entradas": 2956.53,
-    "saidas": 148346.34
-  },
-  {
     "mes": "Out/26",
-    "entradas": 2656.53,
-    "saidas": 102406.33
+    "entradas": 23081.24,
+    "saidas": 257080.88
   },
   {
-    "mes": "Nov/26",
-    "entradas": 2656.53,
-    "saidas": 102049.17
-  },
-  {
-    "mes": "Dez/26",
-    "entradas": 2656.53,
-    "saidas": 102049.17
-  },
-  {
-    "mes": "Jan/27",
-    "entradas": 2656.53,
-    "saidas": 95406.17
-  },
-  {
-    "mes": "Fev/27",
-    "entradas": 1816.53,
-    "saidas": 930.82
-  },
-  {
-    "mes": "Mar/27",
-    "entradas": 1816.53,
-    "saidas": 930.82
-  },
-  {
-    "mes": "Abr/27",
-    "entradas": 1816.53,
-    "saidas": 930.82
-  },
-  {
-    "mes": "Mai/27",
-    "entradas": 1816.53,
-    "saidas": 816.32
-  },
-  {
-    "mes": "Jun/27",
-    "entradas": 1816.62,
-    "saidas": 0.0
+    "mes": "Ago/27",
+    "entradas": 0.0,
+    "saidas": 188.22
   }
 ]

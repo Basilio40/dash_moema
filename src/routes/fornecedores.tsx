@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import data from "@/data/dashboard.json";
+import { carregarDashboard } from "@/lib/dados-remotos";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact, pct } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -30,6 +30,8 @@ export const Route = createFileRoute("/fornecedores")({
       },
     ],
   }),
+  // Dados do repo dados_italinea (em produção) ou JSON local (em dev).
+  loader: () => carregarDashboard(),
   component: FornecedoresPage,
 });
 
@@ -46,6 +48,7 @@ type Item = {
 };
 
 function FornecedoresPage() {
+  const data = Route.useLoaderData();
   const [open, setOpen] = useState<string | null>(null);
   const period = usePeriod();
 

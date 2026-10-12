@@ -12,7 +12,7 @@
  * apenas deixam de somar para o total/margem/resultado dos KPIs e gráficos.
  * Implementação pura (UI): não altera os JSON nem o pipeline de dados.
  */
-import details from "@/data/dre-details.json";
+import detailsFallback from "@/data/dre-details.json";
 
 /** itemCod exatos que devem ser subtraídos das despesas exibidas. */
 export const CODIGOS_EXCLUIDOS = ["4.07.01", "4.03.02", "4.03.01.02.03"] as const;
@@ -26,25 +26,29 @@ const ITENS_REMOVIDOS: Record<string, Record<string, number>> = {
   "4.03.01.01": { Jul: 80000, total: 80000 },
 };
 
-type ItemDre = {
+export type ItemDre = {
   grupoCod: string;
   itemCod: string;
   total: number;
 } & Record<string, number | string>;
 
-const itensExcluidos = (details as ItemDre[]).filter((d) =>
-  (CODIGOS_EXCLUIDOS as readonly string[]).includes(d.itemCod),
-);
+const FALLBACK: ItemDre[] = detailsFallback as unknown as ItemDre[];
+
+function itensExcluidosDe(lista: ItemDre[]) {
+  return lista.filter((d) =>
+    (CODIGOS_EXCLUIDOS as readonly string[]).includes(d.itemCod),
+  );
+}
 
 /** Soma o valor dos itens excluídos em um mês específico ("Jan".."Jul"). */
-export function valorExcluidoMes(mes: string): number {
+export function valorExcluidoMes(mes: string, lista: ItemDre[] = FALLBACK): number {
   const fixo = Object.values(ITENS_REMOVIDOS).reduce(
     (s, m) => s + (m[mes] ?? 0),
     0,
   );
   return (
     fixo +
-    itensExcluidos.reduce((s, it) => {
+    itensExcluidosDe(lista).reduce((s, it) => {
       const v = it[mes];
       return s + (typeof v === "number" ? v : 0);
     }, 0)
@@ -52,9 +56,12 @@ export function valorExcluidoMes(mes: string): number {
 }
 
 /** Soma o valor dos itens excluídos considerando todos os meses. */
-export function valorExcluidoTotal(): number {
+export function valorExcluidoTotal(lista: ItemDre[] = FALLBACK): number {
   const fixo = Object.values(ITENS_REMOVIDOS).reduce((s, m) => s + (m.total ?? 0), 0);
-  return fixo + itensExcluidos.reduce((s, it) => s + (typeof it.total === "number" ? it.total : 0), 0);
+  return (
+    fixo +
+    itensExcluidosDe(lista).reduce((s, it) => (typeof it.total === "number" ? s + it.total : s), 0)
+  );
 }
 
 type MesDre = {
@@ -71,10 +78,13 @@ type MesDre = {
  *  - resultado = receitas − despesas (recalculado)
  *  - margem = receitas ? (resultado / receitas) * 100 : 0 (recalculado)
  * Não muta o array/original nem os registros.
+ *
+ * `lista` é o dre-details.json correspondente aos dados em uso — em produção
+ * vem do repo dados_italinea (loader da rota); o default é o fallback estático.
  */
-export function ajustarDespesas(meses: MesDre[]): MesDre[] {
+export function ajustarDespesas(meses: MesDre[], lista: ItemDre[] = FALLBACK): MesDre[] {
   return meses.map((m) => {
-    const despesas = m.despesas - valorExcluidoMes(m.mes);
+    const despesas = m.despesas - valorExcluidoMes(m.mes, lista);
     const resultado = m.receitas - despesas;
     const margem = m.receitas ? (resultado / m.receitas) * 100 : 0;
     return { ...m, despesas, resultado, margem };

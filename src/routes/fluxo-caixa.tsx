@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import data from "@/data/dashboard.json";
-import details from "@/data/dre-details.json";
-import projecaoContratos from "@/data/projecao-contratos.json";
-import realizadoFluxo from "@/data/fluxo-caixa-realizado.json";
-import previsaoFluxo from "@/data/fluxo-caixa-previsao.json";
+import {
+  carregarDashboard,
+  carregarDreDetails,
+  carregarFluxoCaixa,
+} from "@/lib/dados-remotos";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -30,11 +30,23 @@ export const Route = createFileRoute("/fluxo-caixa")({
       },
     ],
   }),
+  // Dados do repo dados_italinea (em produção) ou JSONs locais (em dev).
+  loader: async () => ({
+    data: await carregarDashboard(),
+    details: await carregarDreDetails(),
+    fluxo: await carregarFluxoCaixa(),
+  }),
   component: FluxoPage,
 });
 
 
 function FluxoPage() {
+  const { data, details, fluxo } = Route.useLoaderData();
+  const {
+    projecao: projecaoContratos,
+    realizado: realizadoFluxo,
+    previsao: previsaoFluxo,
+  } = fluxo;
   const period = usePeriod();
   const filtroMes = (m: string) => (period.mes === "all" ? true : m.startsWith(period.mes));
 

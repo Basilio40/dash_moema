@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import comissoesData from "@/data/comissoes.json";
+import { carregarComissoes } from "@/lib/dados-remotos";
 import { PageHeader, Kpi, Panel } from "@/components/PageHeader";
 import { brl, brlCompact } from "@/lib/format";
 import { DarkTooltip } from "@/components/ChartTooltip";
@@ -25,6 +25,8 @@ export const Route = createFileRoute("/comissoes")({
       },
     ],
   }),
+  // Dados do repo dados_italinea (em produção) ou JSON local (em dev).
+  loader: () => carregarComissoes(),
   component: ComissoesPage,
 });
 
@@ -202,6 +204,7 @@ function TabelaComissoes({ series }: { series: ComissaoMes[] }) {
 }
 
 function ComissoesPage() {
+  const comissoesData = Route.useLoaderData();
   const dados = comissoesData as unknown as {
     fonte: string;
     totalAssinado: number;
