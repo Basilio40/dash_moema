@@ -100,7 +100,7 @@ export function DrePage() {
         />
         <Kpi
           label="Resultado"
-          value={brlCompact(resultado)}
+          value={brl(resultado)}
           tone={resultado >= 0 ? "positive" : "negative"}
         />
         <Kpi
