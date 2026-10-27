@@ -1,12 +1,12 @@
 {
-  "fonte": "Contratosd50c1d8b356149d6b913614f0979c823.xlsx",
+  "fonte": "Contratos446589c06d304831b8f2ba461d8a6de9.xlsx",
   "colunas": [
     "Valor da Venda",
     "Previsão de Entrega"
   ],
-  "total": 8740781.35,
-  "numContratos": 335,
-  "semPrevisaoEntrega": 56,
+  "total": 8881429.15,
+  "numContratos": 344,
+  "semPrevisaoEntrega": 57,
   "series": [
     {
       "mes": "Mai/25",
@@ -124,51 +124,51 @@
     },
     {
       "mes": "Dez/26",
-      "valor": 703013.13,
-      "projetos": 18,
-      "acumulado": 8139657.51
+      "valor": 726118.97,
+      "projetos": 24,
+      "acumulado": 8162763.35
     },
     {
       "mes": "Jan/27",
-      "valor": 195840.0,
-      "projetos": 9,
-      "acumulado": 8335497.51
+      "valor": 245683.12,
+      "projetos": 11,
+      "acumulado": 8408446.47
     },
     {
       "mes": "Fev/27",
-      "valor": 97768.26,
-      "projetos": 4,
-      "acumulado": 8433265.77
+      "valor": 165467.1,
+      "projetos": 5,
+      "acumulado": 8573913.57
     },
     {
       "mes": "Mar/27",
       "valor": 88749.58,
       "projetos": 2,
-      "acumulado": 8522015.35
+      "acumulado": 8662663.15
     },
     {
       "mes": "Abr/27",
       "valor": 66633.02,
       "projetos": 2,
-      "acumulado": 8588648.37
+      "acumulado": 8729296.17
     },
     {
       "mes": "Mai/27",
       "valor": 84927.23,
       "projetos": 3,
-      "acumulado": 8673575.6
+      "acumulado": 8814223.4
     },
     {
       "mes": "Jun/27",
       "valor": 29027.98,
       "projetos": 1,
-      "acumulado": 8702603.58
+      "acumulado": 8843251.38
     },
     {
       "mes": "Set/27",
       "valor": 38177.77,
       "projetos": 1,
-      "acumulado": 8740781.35
+      "acumulado": 8881429.15
     }
   ]
 }

@@ -29,6 +29,7 @@ import {
   itemExcluido,
   NOMES_GRUPOS,
   LEGENDA_EXCLUSAO,
+  LEGENDA_RECEITA,
   type GrupoDre,
   type ItemDre,
 } from "@/lib/despesas";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/dre")({
       },
     ],
   }),
-  // Dados do repo dados_italinea (em produção) ou JSONs locais (em dev),
+  // Dados do repo arquivos_ita (em produção) ou JSONs locais (em dev),
   // com fallback estático se o repo estiver inacessível.
   loader: async () => ({
     data: await carregarDashboard(),
@@ -59,6 +60,9 @@ export function DrePage() {
   const period = usePeriod();
   const dreFiltered = filterByMes(data.dreMonth, period.mes);
   const dreGroups = (data as Record<string, unknown> as { dreGroups: GrupoDre[] }).dreGroups;
+  // Receitas vêm do dreMonth já compostas pelo pipeline (3.01 − itens
+  // deduzidos, extraídos do próprio DRE FOCCO); as despesas seguem a
+  // composição da UI (grupos − itens excluídos) — ver src/lib/despesas.ts.
   const dreAjustado = ajustarDespesas(dreFiltered, details as unknown as ItemDre[], dreGroups);
   const totals = dreAjustado.reduce(
     (a, m) => ({ rec: a.rec + m.receitas, desp: a.desp + m.despesas }),
@@ -72,8 +76,8 @@ export function DrePage() {
   const totalClientes = data.clientes.length;
   const colunas = colunasMes(period.mes);
 
-  // Linha de receita da tabela = "Valor Líquido (À Vista) sem o Per" da
-  // carteira — os mesmos valores de receita exibidos no gráfico.
+  // Linha de receita da tabela = receita composta do DRE (3.01 − itens
+  // deduzidos) — os mesmos valores de receita exibidos nos gráficos/cards.
   const receitaLiquidaPorMes: Record<string, number> = {};
   dreAjustado.forEach((m) => {
     receitaLiquidaPorMes[m.mes] = m.receitas;
@@ -91,7 +95,12 @@ export function DrePage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Kpi label="Receita Bruta" value={brl(totals.rec)} tone="positive" />
+        <Kpi
+          label="Receita"
+          value={brl(totals.rec)}
+          tone="positive"
+          hint="3.01 RECEITA BRUTA − 4.03.01.02.03 − 4.03.02 − 4.07 — ver legenda abaixo da tabela"
+        />
         <Kpi
           label="Despesas"
           value={brl(totals.desp)}
@@ -149,7 +158,9 @@ export function DrePage() {
                 />
               </ComposedChart>
             </ResponsiveContainer>
-            <p className="text-[11px] text-muted-foreground mt-2">{LEGENDA_EXCLUSAO}.</p>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {LEGENDA_RECEITA}. {LEGENDA_EXCLUSAO}.
+            </p>
           </Panel>
         </div>
 
@@ -222,8 +233,8 @@ export function DrePage() {
                 {grupos.map((g) => {
                   const isOpen = expandido === g.grupoCod;
                   // 3.01 deixa de exibir a RECEITA BRUTA do DRE: a linha passa a
-                  // ser o Valor Líquido (À Vista) sem o Per da carteira — o
-                  // mesmo valor de receita dos gráficos/cards (sem drill-down).
+                  // ser a receita composta (3.01 − itens deduzidos) — o mesmo
+                  // valor de receita dos gráficos/cards (sem drill-down).
                   const ehReceitaLiquida = g.grupoCod === "3.01";
                   const itens = ehReceitaLiquida
                     ? []
@@ -258,9 +269,7 @@ export function DrePage() {
                             }`}
                           ></span>
                           {ehReceitaLiquida ? (
-                            <span className="text-foreground">
-                              Valor Líquido (À Vista) sem o Per
-                            </span>
+                            <span className="text-foreground">Receita (3.01 − deduções)</span>
                           ) : (
                             <>
                               <span className="text-foreground">{g.grupoCod}</span>{" "}

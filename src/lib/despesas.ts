@@ -1,6 +1,16 @@
 /**
- * Ajuste de despesas do DRE: os valores exibidos nos cards e gráficos são a
- * somatória EXATA dos grupos da tabela
+ * Composição dos valores do DRE exibidos nos cards e gráficos:
+ *
+ * RECEITA — composta pelo pipeline (arquivos_ita/scripts/transform_dre.py,
+ * mesma lógica da CI) a partir do próprio DRE FOCCO e já entregue pronta em
+ * dreMonth.receitas — a UI apenas exibe e rotula:
+ *   3.01 RECEITA BRUTA
+ *   − 4.03.01.02.03 COMISSÕES CAPTAÇÃO
+ *   − 4.03.02       COMISSÕES E BÔNUS DE TERCEIROS
+ *   − 4.07          DESPESAS FINANCEIRAS VARIÁVEIS
+ *
+ * DESPESAS — ajustadas aqui (ajustarDespesas): a somatória EXATA dos grupos
+ * da tabela
  *   4.01 DEDUÇÕES DE RECEITA
  *   4.02 CUSTOS
  *   4.03 DESPESAS DE VENDAS
@@ -15,12 +25,33 @@
  * O item 4.03.01.01 não existe mais no dre-details.json (removido pelo
  * pipeline); seus valores fixos conhecidos são subtraídos em ITENS_REMOVIDOS.
  *
- * O cálculo parte das próprias linhas de grupo/item renderizadas na tabela,
- * então o número do card reconcilia exatamente com o que aparece na tela.
- * Implementação pura (UI): não altera os JSON nem o pipeline de dados.
+ * O cálculo das despesas parte das próprias linhas de grupo/item renderizadas
+ * na tabela, então o número do card reconcilia exatamente com o que aparece
+ * na tela.
  */
 import detailsFallback from "@/data/dre-details.json";
 import dashboardFallback from "@/data/dashboard.json";
+
+/** Nomenclaturas de grupo exibidas na tabela do DRE. */
+export const NOMES_GRUPOS: Record<string, string> = {
+  "4.01": "DEDUÇÕES DE RECEITA",
+  "4.02": "CUSTOS",
+  "4.03": "DESPESAS DE VENDAS",
+  "4.04": "DESPESAS ADMINISTRATIVAS",
+  "4.07": "DESPESAS FINANCEIRAS VARIÁVEIS",
+};
+
+/** Itens deduzidos da receita composta pelo pipeline (rotulagem apenas). */
+export const ITENS_DEDUZIDOS_RECEITA = [
+  { itemCod: "4.03.01.02.03", nome: "COMISSÕES CAPTAÇÃO" },
+  { itemCod: "4.03.02", nome: "COMISSÕES E BÔNUS DE TERCEIROS" },
+  { itemCod: "4.07", nome: "DESPESAS FINANCEIRAS VARIÁVEIS" },
+] as const;
+
+/** Texto padrão de legenda sobre a composição da receita. */
+export const LEGENDA_RECEITA = `Receita = 3.01 RECEITA BRUTA − ${ITENS_DEDUZIDOS_RECEITA.map(
+  (i) => `${i.itemCod} ${i.nome}`,
+).join(" − ")}`;
 
 /** Grupos que compõem o total de despesas exibido (somatória da fórmula). */
 export const GRUPOS_DESPESA = ["4.01", "4.02", "4.03", "4.04", "4.07"] as const;
@@ -49,15 +80,6 @@ export const ITENS_EXCLUIDOS_LEGENDA = [
 export const LEGENDA_EXCLUSAO = `Itens excluídos dos valores de despesas: ${ITENS_EXCLUIDOS_LEGENDA.map(
   (i) => `${i.itemCod} ${i.nome}`,
 ).join(" · ")}`;
-
-/** Nomenclaturas de grupo exibidas na tabela do DRE. */
-export const NOMES_GRUPOS: Record<string, string> = {
-  "4.01": "DEDUÇÕES DE RECEITA",
-  "4.02": "CUSTOS",
-  "4.03": "DESPESAS DE VENDAS",
-  "4.04": "DESPESAS ADMINISTRATIVAS",
-  "4.07": "DESPESAS FINANCEIRAS VARIÁVEIS",
-};
 
 export type ItemDre = {
   grupoCod: string;
@@ -125,6 +147,7 @@ type MesDre = {
 
 /**
  * Recebe o array dreMonth (após filterByMes) e devolve uma cópia com:
+ *  - receitas preservadas (já compostas pelo pipeline: 3.01 − deduções)
  *  - despesas = Σ grupos de despesa do mês − itens excluídos do mês
  *  - resultado = receitas − despesas (recalculado)
  *  - margem = receitas ? (resultado / receitas) * 100 : 0 (recalculado)

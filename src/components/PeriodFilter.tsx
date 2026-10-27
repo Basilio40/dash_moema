@@ -8,7 +8,22 @@ import {
 } from "@/components/ui/select";
 import { CalendarDays } from "lucide-react";
 
-export const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"];
+// 12 meses: os relatórios FOCCO agora vão além de Ago (Set/Out já existem)
+// e o antigo corte fixo em Jan–Ago escondia os meses novos da tabela/filtro.
+export const MESES_CURTOS = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 export const MES_OPCOES = [
   { value: "all", label: "Todos os meses" },
@@ -20,6 +35,10 @@ export const MES_OPCOES = [
   { value: "Jun", label: "Junho" },
   { value: "Jul", label: "Julho" },
   { value: "Ago", label: "Agosto" },
+  { value: "Set", label: "Setembro" },
+  { value: "Out", label: "Outubro" },
+  { value: "Nov", label: "Novembro" },
+  { value: "Dez", label: "Dezembro" },
 ];
 
 export const ANO_OPCOES = [{ value: "2026", label: "2026" }];
