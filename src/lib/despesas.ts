@@ -22,6 +22,10 @@
  *   4.03.02       COMISSÕES E BÔNUS DE TERCEIROS
  *   4.07.01       DESPESAS FINANCEIRAS VARIÁVEIS (grupo 4.07 inteiro)
  *
+ * O grupo 4.06 DESPESAS E RECEITAS FINANCEIRAS também fica excluído: não
+ * entra na soma (não existe em dreGroups) e o pipeline já o descarrega do
+ * dreMonth.despesas — ver DESPESA_GRUPOS no transform_dre do arquivos_ita.
+ *
  * O item 4.03.01.01 não existe mais no dre-details.json (removido pelo
  * pipeline); seus valores fixos conhecidos são subtraídos em ITENS_REMOVIDOS.
  *
@@ -73,6 +77,7 @@ export const ITENS_EXCLUIDOS_LEGENDA = [
   { itemCod: "4.03.01.01", nome: "REMUNERAÇÃO VARIÁVEL DE SÓCIOS / PROPRIETÁRIOS" },
   { itemCod: "4.03.01.02.03", nome: "COMISSÕES CAPTAÇÃO" },
   { itemCod: "4.03.02", nome: "COMISSÕES E BÔNUS DE TERCEIROS" },
+  { itemCod: "4.06", nome: "DESPESAS E RECEITAS FINANCEIRAS" },
   { itemCod: "4.07", nome: "DESPESAS FINANCEIRAS VARIÁVEIS" },
 ] as const;
 
