@@ -105,7 +105,7 @@ export function DrePage() {
           label="Despesas"
           value={brl(totals.desp)}
           tone="negative"
-          hint="Exclui 4.03.01.01, 4.03.01.02.03, 4.03.02, 4.06 e 4.07 — legenda completa abaixo da tabela"
+          hint="Exclui 4.03.01.01, 4.03.01.02.03, 4.03.02 e 4.07 — legenda completa abaixo da tabela"
         />
         <Kpi
           label="Resultado"

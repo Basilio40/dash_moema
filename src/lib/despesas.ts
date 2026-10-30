@@ -15,16 +15,13 @@
  *   4.02 CUSTOS
  *   4.03 DESPESAS DE VENDAS
  *   4.04 DESPESAS ADMINISTRATIVAS
+ *   4.06 DESPESAS E RECEITAS FINANCEIRAS
  *   4.07 DESPESAS FINANCEIRAS VARIÁVEIS
  * subtraídos os itens excluídos (listados nas legendas da UI):
  *   4.03.01.01    REMUNERAÇÃO VARIÁVEL DE SÓCIOS / PROPRIETÁRIOS (oculto da tabela)
  *   4.03.01.02.03 COMISSÕES CAPTAÇÃO
  *   4.03.02       COMISSÕES E BÔNUS DE TERCEIROS
  *   4.07.01       DESPESAS FINANCEIRAS VARIÁVEIS (grupo 4.07 inteiro)
- *
- * O grupo 4.06 DESPESAS E RECEITAS FINANCEIRAS também fica excluído: não
- * entra na soma (não existe em dreGroups) e o pipeline já o descarrega do
- * dreMonth.despesas — ver DESPESA_GRUPOS no transform_dre do arquivos_ita.
  *
  * O item 4.03.01.01 não existe mais no dre-details.json (removido pelo
  * pipeline); seus valores fixos conhecidos são subtraídos em ITENS_REMOVIDOS.
@@ -58,7 +55,7 @@ export const LEGENDA_RECEITA = `Receita = 3.01 RECEITA BRUTA − ${ITENS_DEDUZID
 ).join(" − ")}`;
 
 /** Grupos que compõem o total de despesas exibido (somatória da fórmula). */
-export const GRUPOS_DESPESA = ["4.01", "4.02", "4.03", "4.04", "4.07"] as const;
+export const GRUPOS_DESPESA = ["4.01", "4.02", "4.03", "4.04", "4.06", "4.07"] as const;
 
 /** itemCod exatos subtraídos das despesas exibidas (o 4.07 vira o item 4.07.01). */
 export const CODIGOS_EXCLUIDOS = ["4.03.01.02.03", "4.03.02", "4.07.01"] as const;
@@ -77,7 +74,6 @@ export const ITENS_EXCLUIDOS_LEGENDA = [
   { itemCod: "4.03.01.01", nome: "REMUNERAÇÃO VARIÁVEL DE SÓCIOS / PROPRIETÁRIOS" },
   { itemCod: "4.03.01.02.03", nome: "COMISSÕES CAPTAÇÃO" },
   { itemCod: "4.03.02", nome: "COMISSÕES E BÔNUS DE TERCEIROS" },
-  { itemCod: "4.06", nome: "DESPESAS E RECEITAS FINANCEIRAS" },
   { itemCod: "4.07", nome: "DESPESAS FINANCEIRAS VARIÁVEIS" },
 ] as const;
 
